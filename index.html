@@ -584,6 +584,10 @@
               <i data-lucide="save" class="w-4 h-4"></i>
               <span>حفظ ومزامنة القالب في Google Sheets</span>
             </button>
+            <button id="btn-refresh-tpl-from-sheets" type="button" class="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-bold transition flex items-center gap-1.5">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              <span>جلب القالب من الشيت</span>
+            </button>
           </div>
         </div>
 
@@ -977,19 +981,23 @@
         '    }',
         '  } else if (action === "saveCourse") {',
         '    const c = body.data || {};',
+        '    const cRows = [["Key", "Value"]];',
+        '    Object.keys(c).forEach(function(k){ cRows.push([k, String(c[k] || "")]); });',
         '    cfgSheet.clearContents();',
-        '    cfgSheet.appendRow(["Key", "Value"]);',
-        '    Object.keys(c).forEach(function(k){ cfgSheet.appendRow([k, String(c[k] || "")]); });',
+        '    cfgSheet.getRange(1, 1, cRows.length, 2).setValues(cRows);',
+        '    return ContentService.createTextOutput(JSON.stringify({ status: "ok", saved: "course" })).setMimeType(ContentService.MimeType.JSON);',
         '  } else if (action === "saveTemplate") {',
         '    const t = body.data || {};',
-        '    tplSheet.clearContents();',
-        '    tplSheet.appendRow(["Key", "Value"]);',
+        '    const tRows = [["Key", "Value"]];',
         '    Object.keys(t).forEach(function(k){',
         '      const val = String(t[k] || "");',
-        '      if (val.length <= 48000) tplSheet.appendRow([k, val]);',
+        '      if (val.length <= 48000) tRows.push([k, val]);',
         '    });',
+        '    tplSheet.clearContents();',
+        '    tplSheet.getRange(1, 1, tRows.length, 2).setValues(tRows);',
+        '    return ContentService.createTextOutput(JSON.stringify({ status: "ok", saved: "template" })).setMimeType(ContentService.MimeType.JSON);',
         '  }',
-        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))',
+        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok", saved: action }))',
         '    .setMimeType(ContentService.MimeType.JSON);',
         '}'
       ].join('\n');
@@ -1262,7 +1270,8 @@
       async function syncPublicCourseFromSheets() {
         if (!isValidSheetsUrl(state.sheetsApiUrl)) return false;
         try {
-          const res = await fetch(state.sheetsApiUrl.trim(), { method: 'GET' });
+          const sep = state.sheetsApiUrl.includes('?') ? '&' : '?';
+          const res = await fetch(state.sheetsApiUrl.trim() + sep + '_t=' + Date.now(), { method: 'GET', cache: 'no-store' });
           if (!res.ok) return false;
           const json = await res.json();
           if (json && json.status === 'ok' && json.course && Object.keys(json.course).length > 0) {
@@ -1282,8 +1291,8 @@
         }
         try {
           const sep = state.sheetsApiUrl.includes('?') ? '&' : '?';
-          const url = state.sheetsApiUrl.trim() + sep + 'action=adminGet&pin=' + encodeURIComponent(pin || '');
-          const res = await fetch(url, { method: 'GET' });
+          const url = state.sheetsApiUrl.trim() + sep + 'action=adminGet&pin=' + encodeURIComponent(pin || '') + '&_t=' + Date.now();
+          const res = await fetch(url, { method: 'GET', cache: 'no-store' });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const json = await res.json();
           if (json && json.status === 'unauthorized') {
@@ -1310,7 +1319,7 @@
             saveState();
             renderAll();
             if (!silent) showToast('تمت المزامنة الآمنة مع Google Sheets بنجاح', 'success');
-            return { ok: true };
+            return { ok: true, hasTemplate: Boolean(json.template) };
           }
           throw new Error('Bad payload');
         } catch (err) {
@@ -1320,21 +1329,28 @@
       }
 
       async function pushToSheets(payload) {
-        if (!isValidSheetsUrl(state.sheetsApiUrl)) return false;
+        if (!isValidSheetsUrl(state.sheetsApiUrl)) return { ok: false, reason: 'no_url' };
         const bodyPayload = Object.assign({}, payload);
         if (payload.action !== 'add') {
           bodyPayload.pin = sessionAdminPin;
         }
         try {
-          await fetch(state.sheetsApiUrl.trim(), {
+          const res = await fetch(state.sheetsApiUrl.trim(), {
             method: 'POST',
-            mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(bodyPayload)
           });
-          return true;
+          if (!res.ok) return { ok: false, reason: 'http_' + res.status };
+          const json = await res.json();
+          if (json && json.status === 'unauthorized') {
+            return { ok: false, reason: 'unauthorized' };
+          }
+          if (json && json.status === 'ok') {
+            return { ok: true, saved: json.saved || '' };
+          }
+          return { ok: false, reason: 'bad_response' };
         } catch (err) {
-          return false;
+          return { ok: false, reason: 'network' };
         }
       }
 
@@ -2509,10 +2525,23 @@
         saveState();
         renderAll();
         if (isValidSheetsUrl(state.sheetsApiUrl)) {
-          await pushToSheets({ action: 'saveTemplate', data: state.template });
-          showToast('تم حفظ ومزامنة قالب الخطاب في Google Sheets بنجاح', 'success');
+          const res = await pushToSheets({ action: 'saveTemplate', data: state.template });
+          if (res.ok && res.saved === 'template') {
+            showToast('تم حفظ ومزامنة قالب الخطاب في Google Sheets بنجاح', 'success');
+          } else if (res.reason === 'unauthorized') {
+            showToast('فشلت المزامنة: رمز الأدمن غير مطابق لـ ADMIN_SECRET داخل الشيت', 'error');
+          } else {
+            showToast('حُفظ محلياً فقط — تأكد من تحديث كود Code.gs ونشر إصدار جديد (New version)', 'error');
+          }
         } else {
-          showToast('تم حفظ وتفعيل قالب الخطاب الرسمي بنجاح', 'success');
+          showToast('تم حفظ وتفعيل قالب الخطاب الرسمي محلياً', 'success');
+        }
+      });
+
+      document.getElementById('btn-refresh-tpl-from-sheets').addEventListener('click', async function () {
+        const res = await syncAdminFromSheets(sessionAdminPin, false);
+        if (res.ok && !res.hasTemplate) {
+          showToast('الشيت لا يُرجع القالب بعد — حدّث كود Code.gs وانشر إصداراً جديداً', 'error');
         }
       });
 
