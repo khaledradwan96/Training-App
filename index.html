@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام تسجيل الدورات التدريبية وإصدار خطابات الترشيح</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --primary: #0f3d5e;
+      --primary-hover: #0a2c45;
+      --accent: #0d9488;
+    }
+
+    body {
+      font-family: 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* A4 Preview Sheet Styling */
+    .a4-sheet {
+      background: #ffffff;
+      width: 100%;
+      max-width: 210mm;
+      min-height: 270mm;
+      margin: 0 auto;
+      padding: 18mm 16mm;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      color: #111827;
+      line-height: 1.85;
+      position: relative;
+    }
+
+    .a4-sheet table.nomination-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 20px;
+      font-size: 13.5px;
+    }
+
+    .a4-sheet table.nomination-table th,
+    .a4-sheet table.nomination-table td {
+      border: 1px solid #334155;
+      padding: 8px 10px;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    .a4-sheet table.nomination-table th {
+      background-color: #f1f5f9;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+    }
+
+    .a4-sheet table.nomination-table td.center-cell {
+      text-align: center;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .toast-enter {
+      animation: slideUp 0.25s ease-out forwards;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #print-only-wrapper {
+        display: block !important;
+      }
+      .a4-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 4mm 6mm !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="no-print bg-slate-900 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300 shrink-0">
+          <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold leading-tight">بوابة الترشيح للدورات التدريبية</h1>
+          <p class="text-xs text-slate-300 hidden sm:block">تجميع بيانات المتقدمين، أرشيف الدورات والزملاء، وإصدار خطابات الترشيح</p>
+        </div>
+      </div>
+
+      <div id="header-mode-switcher" class="flex items-center gap-2">
+        <span id="sync-status-pill" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="sync-label">حفظ محلي</span>
+        </span>
+        <div class="bg-slate-800 p-1 rounded-xl flex items-center border border-slate-700">
+          <button id="btn-mode-public" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>واجهة التسجيل</span>
+          </button>
+          <button id="btn-mode-admin" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>لوحة الأدمن</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="no-print flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== PUBLIC REGISTRATION VIEW ==================== -->
+    <section id="view-public" class="hidden max-w-3xl mx-auto space-y-6">
+      <!-- Course Banner Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-l from-slate-900 via-sky-950 to-teal-900 text-white p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span id="pub-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              التسجيل متاح الآن
+            </span>
+            <span id="pub-organizer-badge" class="text-xs text-sky-200 font-medium"></span>
+          </div>
+          <h2 id="pub-course-title" class="text-xl sm:text-2xl font-extrabold leading-snug mb-4"></h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-slate-200">
+            <div class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <i data-lucide="calendar" class="w-4 h-4 text-teal-300 shrink-0"></i>
+              <span id="pub-course-date"></span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-teal-300 shrink-0"></i>
+              <span id="pub-course-location"></span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-300 shrink-0"></i>
+              <span>آخر موعد: <strong id="pub-course-deadline" class="text-white"></strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Announcement Section (Image and/or Text) -->
+        <div id="pub-ad-section" class="p-6 border-b border-slate-100 space-y-4">
+          <div class="flex items-center gap-2 text-slate-800 font-bold text-sm">
+            <i data-lucide="megaphone" class="w-4 h-4 text-teal-600"></i>
+            <span>تفاصيل وإعلان الدورة التدريبية</span>
+          </div>
+          <div id="pub-ad-image-wrap" class="hidden">
+            <img id="pub-ad-image" src="" alt="إعلان الدورة التدريبية" class="w-full max-h-[420px] object-contain rounded-xl border border-slate-200 bg-slate-50 cursor-pointer" />
+            <p class="text-xs text-slate-500 mt-1.5 text-center">اضغط على صورة الإعلان لتكبيرها</p>
+          </div>
+          <div id="pub-ad-text" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50 rounded-xl p-4 border border-slate-200/80"></div>
+        </div>
+
+        <!-- Closed Notice -->
+        <div id="pub-closed-notice" class="hidden p-8 text-center space-y-3">
+          <div class="w-14 h-14 mx-auto rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+            <i data-lucide="lock" class="w-7 h-7"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800">تم إغلاق باب التسجيل في هذه الدورة</h3>
+          <p class="text-sm text-slate-500">نشكركم على اهتمامكم. للتواصل أو الاستفسار يرجى مراجعة منسق التدريب.</p>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="public-registration-form" class="p-6 sm:p-8 space-y-5" novalidate>
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-lg font-bold text-slate-900">استمارة تسجيل الرغبة في الالتحاق</h3>
+            <p class="text-xs text-slate-500 mt-1">يرجى إدخال البيانات بدقة كما ستظهر في خطاب الترشيح الرسمي.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+              <label for="reg-fullname" class="block text-sm font-bold text-slate-700 mb-1.5">
+                الاسم رباعي <span class="text-rose-500">*</span>
+              </label>
+              <input id="reg-fullname" type="text" required placeholder="مثال: محمد أحمد محمود عبد الله" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" />
+              <p id="err-fullname" class="hidden text-xs text-rose-600 mt-1 font-medium"></p>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label for="reg-job" class="block text-sm font-bold text-slate-700 mb-1.5">
+                الوظيفة / المسمى الوظيفي <span class="text-rose-500">*</span>
+              </label>
+              <input id="reg-job" type="text" required placeholder="مثال: مهندس مدني - إدارة التطوير" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" />
+              <p id="err-job" class="hidden text-xs text-rose-600 mt-1 font-medium"></p>
+            </div>
+
+            <div>
+              <label for="reg-phone" class="block text-sm font-bold text-slate-700 mb-1.5">
+                رقم الموبايل <span class="text-rose-500">*</span>
+              </label>
+              <input id="reg-phone" type="tel" dir="ltr" required placeholder="01012345678" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-left focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" />
+              <p id="err-phone" class="hidden text-xs text-rose-600 mt-1 font-medium"></p>
+            </div>
+
+            <div>
+              <label for="reg-email" class="block text-sm font-bold text-slate-700 mb-1.5">
+                البريد الإلكتروني <span class="text-rose-500">*</span>
+              </label>
+              <input id="reg-email" type="email" dir="ltr" required placeholder="name@example.com" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-left focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none transition" />
+              <p id="err-email" class="hidden text-xs text-rose-600 mt-1 font-medium"></p>
+            </div>
+          </div>
+
+          <!-- Confirmation Checkbox -->
+          <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-4">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input id="reg-confirm" type="checkbox" class="mt-1 w-4 h-4 rounded border-teal-400 text-teal-600 focus:ring-teal-500 shrink-0" />
+              <span class="text-sm text-slate-800 leading-relaxed font-medium">
+                أؤكد رغبتي في الالتحاق بهذه الدورة التدريبية والالتزام بحضورها في المواعيد المحددة، وأقر بأن جميع البيانات المدخلة أعلاه صحيحة.
+              </span>
+            </label>
+            <p id="err-confirm" class="hidden text-xs text-rose-600 mt-2 font-medium"></p>
+          </div>
+
+          <button id="btn-submit-public" type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl shadow-sm transition flex items-center justify-center gap-2 text-sm sm:text-base">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>تسجيل البيانات وتأكيد الرغبة</span>
+          </button>
+        </form>
+
+        <!-- Success Confirmation State -->
+        <div id="pub-success-state" class="hidden p-8 text-center space-y-4">
+          <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="check-circle-2" class="w-9 h-9"></i>
+          </div>
+          <h3 class="text-xl font-extrabold text-slate-900">تم تسجيل طلبك بنجاح!</h3>
+          <p class="text-sm text-slate-600 max-w-md mx-auto">تم إدراج بياناتك ضمن قائمة الراغبين في الالتحاق بالدورة، وسيقوم مسؤول التدريب بإدراجها في خطاب الترشيح.</p>
+          <div id="pub-success-summary" class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-right text-sm max-w-md mx-auto space-y-1.5"></div>
+          <div class="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <button id="btn-register-another" type="button" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition">
+              تسجيل متقدم آخر
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discreet Admin Unlock Button when opened in colleague-only link (#register) -->
+      <div id="pub-admin-footer" class="hidden text-center pt-2">
+        <button id="btn-unlock-admin-footer" type="button" class="text-xs text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition">
+          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+          <span>دخول الأدمن</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== ADMIN DASHBOARD VIEW ==================== -->
+    <section id="view-admin" class="space-y-6">
+
+      <!-- KPI Summary Bar -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-medium">مسجلو الدورة الحالية</p>
+            <p id="kpi-total" class="text-2xl font-extrabold text-slate-900">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <i data-lucide="user-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-medium">مشمولون بالترشيح</p>
+            <p id="kpi-selected" class="text-2xl font-extrabold text-emerald-700">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+            <i data-lucide="archive" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-medium">دليل الزملاء المحفوظين</p>
+            <p id="kpi-directory-count" class="text-2xl font-extrabold text-violet-700">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs text-slate-500 font-medium">حالة التسجيل</p>
+            <p id="kpi-reg-status" class="text-sm font-bold text-emerald-700 mt-0.5">مفتوح</p>
+          </div>
+          <button id="btn-copy-share-link" type="button" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shrink-0">
+            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            <span>نسخ رابط الزملاء</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Navigation Tabs -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-2 flex flex-wrap gap-1.5">
+        <button data-tab="tab-course" type="button" class="admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-slate-900 text-white">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>الدورة والإعلان</span>
+        </button>
+        <button data-tab="tab-registrants" type="button" class="admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+          <i data-lucide="list-checks" class="w-4 h-4"></i>
+          <span>المسجلون (<span id="tab-count-badge">0</span>)</span>
+        </button>
+        <button data-tab="tab-template" type="button" class="admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+          <i data-lucide="layout-template" class="w-4 h-4"></i>
+          <span>تيمبلت الجواب</span>
+        </button>
+        <button data-tab="tab-export" type="button" class="admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>طباعة / Word</span>
+        </button>
+        <button data-tab="tab-sheets" type="button" class="admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+          <i data-lucide="database" class="w-4 h-4"></i>
+          <span>ربط Google Sheets</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: Course & Announcement Settings -->
+      <div id="tab-course" class="admin-panel grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="settings-2" class="w-5 h-5 text-teal-600"></i>
+              <span>إعدادات الدورة التدريبية الحالية</span>
+            </h3>
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">
+              <input id="adm-course-open" type="checkbox" class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500" />
+              <span>التسجيل مفتوح</span>
+            </label>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+              <label for="adm-course-title" class="block text-xs font-bold text-slate-700 mb-1.5">اسم الدورة التدريبية (تغيير الاسم يبدأ قائمة ترشيح لدورة جديدة مع الاحتفاظ بأرشيف السابقة)</label>
+              <input id="adm-course-title" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+            </div>
+            <div>
+              <label for="adm-course-organizer" class="block text-xs font-bold text-slate-700 mb-1.5">الجهة المنظمة / المركز</label>
+              <input id="adm-course-organizer" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+            </div>
+            <div>
+              <label for="adm-course-date" class="block text-xs font-bold text-slate-700 mb-1.5">تاريخ / فترة الانعقاد</label>
+              <input id="adm-course-date" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+            </div>
+            <div>
+              <label for="adm-course-location" class="block text-xs font-bold text-slate-700 mb-1.5">مكان الانعقاد (حضوري / أونلاين)</label>
+              <input id="adm-course-location" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+            </div>
+            <div>
+              <label for="adm-course-deadline" class="block text-xs font-bold text-slate-700 mb-1.5">آخر موعد للتسجيل</label>
+              <input id="adm-course-deadline" type="date" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-export-json" type="button" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>نسخة احتياطية (JSON)</span>
+              </button>
+              <label class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>استعادة نسخة</span>
+                <input id="input-import-json" type="file" accept=".json" class="hidden" />
+              </label>
+            </div>
+            <button id="btn-save-course" type="button" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-sm transition flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>حفظ ومزامنة بيانات الدورة</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Announcement Upload (Text or Image or Both) -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+            <i data-lucide="megaphone" class="w-5 h-5 text-teal-600"></i>
+            <span>إعلان الدورة (نص أو صورة)</span>
+          </h3>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">رفع صورة الإعلان (اختياري)</label>
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-teal-500 transition bg-slate-50/70">
+              <input id="adm-ad-image-input" type="file" accept="image/*" class="hidden" />
+              <div id="adm-ad-image-preview-wrap" class="hidden space-y-2">
+                <img id="adm-ad-image-preview" src="" alt="معاينة صورة الإعلان" class="max-h-44 mx-auto rounded-lg border border-slate-200 object-contain" />
+                <div class="flex items-center justify-center gap-2">
+                  <button id="btn-change-ad-img" type="button" class="px-3 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold">تغيير الصورة</button>
+                  <button id="btn-remove-ad-img" type="button" class="px-3 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold">إزالة الصورة</button>
+                </div>
+              </div>
+              <label id="adm-ad-image-placeholder" for="adm-ad-image-input" class="cursor-pointer block py-3 space-y-1.5">
+                <i data-lucide="image-plus" class="w-8 h-8 mx-auto text-slate-400"></i>
+                <p class="text-xs font-bold text-slate-700">اضغط لرفع صورة الإعلان (PNG / JPG)</p>
+                <p class="text-[11px] text-slate-500">ستظهر الصورة للمتقدمين أعلى استمارة التسجيل</p>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="adm-ad-text" class="block text-xs font-bold text-slate-700 mb-1.5">نص الإعلان / شروط الالتحاق</label>
+            <textarea id="adm-ad-text" rows="5" placeholder="اكتب هنا تفاصيل الدورة، الفئة المستهدفة، المحاور، وأي شروط إضافية..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none leading-relaxed"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Registrants Management + Archive + Quick Directory -->
+      <div id="tab-registrants" class="admin-panel hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 sm:p-6 border-b border-slate-100 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
+              <div class="relative flex-1 min-w-[200px] max-w-sm">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+                <input id="adm-search-input" type="text" placeholder="ابحث بالاسم، الوظيفة، الموبايل، أو البريد..." class="w-full rounded-xl border border-slate-300 pr-10 pl-4 py-2 text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+              </div>
+              <select id="adm-course-filter" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 focus:border-teal-600 outline-none max-w-xs">
+                <option value="__CURRENT__">الدورة الحالية فقط</option>
+                <option value="__ALL__">جميع الدورات (الأرشيف الكامل)</option>
+              </select>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btn-refresh-from-sheets" type="button" class="px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>تحديث من الشيت</span>
+              </button>
+              <button id="btn-select-all" type="button" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">تحديد الكل للترشيح</button>
+              <button id="btn-open-directory" type="button" class="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                <span>ترشيح سريع من سجل الزملاء</span>
+              </button>
+              <button id="btn-add-registrant" type="button" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>إضافة متقدم يدوياً</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-right border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
+                <th class="py-3 px-4 w-12 text-center">ترشيح</th>
+                <th class="py-3 px-4 w-10 text-center">#</th>
+                <th class="py-3 px-4">الاسم رباعي</th>
+                <th class="py-3 px-4">الوظيفة</th>
+                <th class="py-3 px-4">رقم الموبايل</th>
+                <th class="py-3 px-4">البريد الإلكتروني</th>
+                <th id="th-course-col" class="hidden py-3 px-4">الدورة التدريبية</th>
+                <th class="py-3 px-4 text-center">تأكيد الرغبة</th>
+                <th class="py-3 px-4 text-center">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="registrants-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
+          </table>
+        </div>
+
+        <div id="registrants-empty" class="hidden p-10 text-center space-y-2">
+          <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-300"></i>
+          <p class="text-sm font-bold text-slate-600">لا يوجد مسجلون مطابقون حالياً</p>
+          <p class="text-xs text-slate-400">شارك رابط التسجيل، أو استخدم «ترشيح سريع من سجل الزملاء»، أو أضف متقدماً يدوياً.</p>
+        </div>
+      </div>
+
+      <!-- TAB 3: Letter Template Customization & Upload -->
+      <div id="tab-template" class="admin-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Standard Template Editor -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="file-edit" class="w-5 h-5 text-teal-600"></i>
+              <span>تخصيص القالب الرسمي لجواب الترشيح</span>
+            </h3>
+            <span id="tpl-active-pill" class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مُفعّل حالياً</span>
+          </div>
+
+          <!-- Letterhead Image Upload -->
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="text-xs font-bold text-slate-800">صورة الترويسة الرسمية / الأكليشيه (Letterhead) أعلى الجواب</label>
+              <div class="flex items-center gap-2">
+                <label class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition flex items-center gap-1.5">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                  <span>رفع صورة ترويسة</span>
+                  <input id="tpl-letterhead-input" type="file" accept="image/*" class="hidden" />
+                </label>
+                <button id="btn-remove-letterhead" type="button" class="hidden px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold">إزالة</button>
+              </div>
+            </div>
+            <div id="tpl-letterhead-preview-wrap" class="hidden pt-2">
+              <img id="tpl-letterhead-preview" src="" alt="ترويسة الجواب" class="max-h-24 mx-auto rounded border border-slate-200 bg-white p-1" />
+            </div>
+            <p class="text-[11px] text-slate-500">عند رفع ترويسة مصورة ستظهر في رأس الخطاب تلقائياً في الطباعة وملف Word.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="tpl-header-right" class="block text-xs font-bold text-slate-700 mb-1">بيانات الجهة (أعلى اليمين)</label>
+              <textarea id="tpl-header-right" rows="3" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs leading-relaxed focus:border-teal-600 outline-none"></textarea>
+            </div>
+            <div>
+              <label for="tpl-header-left" class="block text-xs font-bold text-slate-700 mb-1">التاريخ ورقم الإشارة (أعلى اليسار)</label>
+              <textarea id="tpl-header-left" rows="3" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs leading-relaxed focus:border-teal-600 outline-none"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-recipient" class="block text-xs font-bold text-slate-700 mb-1">الجهة المرسل إليها الخطاب</label>
+              <input id="tpl-recipient" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-greeting" class="block text-xs font-bold text-slate-700 mb-1">التحية الافتتاحية</label>
+              <input id="tpl-greeting" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-intro" class="block text-xs font-bold text-slate-700 mb-1">ديباجة ومقدمة الجواب (يدعم المتغيرات مثل {{COURSE_TITLE}} و {{COURSE_DATE}})</label>
+              <textarea id="tpl-intro" rows="3" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm leading-relaxed focus:border-teal-600 outline-none"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-closing" class="block text-xs font-bold text-slate-700 mb-1">خاتمة الجواب</label>
+              <textarea id="tpl-closing" rows="2" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm leading-relaxed focus:border-teal-600 outline-none"></textarea>
+            </div>
+            <div>
+              <label for="tpl-signer-title" class="block text-xs font-bold text-slate-700 mb-1">صفة المُوقّع</label>
+              <input id="tpl-signer-title" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div>
+              <label for="tpl-signer-name" class="block text-xs font-bold text-slate-700 mb-1">اسم المُوقّع</label>
+              <input id="tpl-signer-name" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-slate-100">
+            <button id="btn-use-standard-tpl" type="button" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>حفظ وتفعيل القالب الرسمي</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Uploaded Template Section -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="file-up" class="w-5 h-5 text-sky-600"></i>
+              <span>رفع تيمبلت خاص بالجواب</span>
+            </h3>
+            <span id="custom-tpl-active-pill" class="hidden px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800">مُفعّل حالياً</span>
+          </div>
+
+          <p class="text-xs text-slate-600 leading-relaxed">
+            يمكنك رفع ملف تيمبلت جاهز بصيغة <strong class="text-slate-900">HTML</strong> أو <strong class="text-slate-900">TXT</strong> يحتوي على شكل الجواب المعتمد لديكم، وسيقوم النظام تلقائياً بتعبئة بيانات الدورة وجدول المتقدمين مكان المتغيرات.
+          </p>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+            <p class="text-xs font-bold text-slate-800">المتغيرات المدعومة داخل ملف التيمبلت:</p>
+            <div class="flex flex-wrap gap-1.5 text-[11px] font-mono" dir="ltr">
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{COURSE_TITLE}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{ORGANIZER}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{COURSE_DATE}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{LOCATION}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{TODAY}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-sky-700">{{COUNT}}</span>
+              <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-teal-700 font-bold">{{TABLE}}</span>
+            </div>
+          </div>
+
+          <div class="border-2 border-dashed border-sky-300 rounded-xl p-5 text-center bg-sky-50/40 space-y-2">
+            <input id="custom-tpl-file-input" type="file" accept=".html,.htm,.txt" class="hidden" />
+            <label for="custom-tpl-file-input" class="cursor-pointer block space-y-1.5">
+              <i data-lucide="upload-cloud" class="w-9 h-9 mx-auto text-sky-600"></i>
+              <p class="text-xs font-bold text-slate-800">اضغط لرفع ملف التيمبلت (.html / .txt)</p>
+              <p id="custom-tpl-filename" class="text-[11px] text-slate-500">لم يتم رفع ملف تيمبلت مخصص بعد</p>
+            </label>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-download-sample-tpl" type="button" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="file-down" class="w-4 h-4"></i>
+              <span>تحميل تيمبلت نموذجي للتعديل</span>
+            </button>
+            <button id="btn-clear-custom-tpl" type="button" class="hidden px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
+              العودة للقالب الرسمي
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: Letter Preview, Print & Word Export -->
+      <div id="tab-export" class="admin-panel hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-base font-extrabold text-slate-900">معاينة خطاب الترشيح النهائي</h3>
+              <select id="export-course-select" class="rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 outline-none max-w-xs"></select>
+            </div>
+            <p class="text-xs text-slate-500">يعرض الخطاب السادة المحددين لهذه الدورة (<span id="export-selected-count" class="font-bold text-teal-700">0</span> متقدمين).</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-export-csv" type="button" class="px-3.5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-bold transition flex items-center gap-1.5">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+              <span>تصدير Excel (CSV)</span>
+            </button>
+            <button id="btn-export-word" type="button" class="px-4 py-2.5 rounded-xl bg-sky-700 hover:bg-sky-800 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span>تصدير ملف Word (.doc)</span>
+            </button>
+            <button id="btn-print-letter" type="button" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span>طباعة الجواب</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live A4 Preview -->
+        <div class="overflow-x-auto pb-4">
+          <div id="letter-preview-container" class="a4-sheet"></div>
+        </div>
+      </div>
+
+      <!-- TAB 5: Google Sheets Sync, Links & Admin PIN -->
+      <div id="tab-sheets" class="admin-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="database" class="w-5 h-5 text-emerald-600"></i>
+              <span>ربط قاعدة بيانات Google Sheets والروابط المباشرة</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">الصق رابط Web App الناتج من Google Apps Script ليتم تسجيل وأرشفة جميع الدورات والزملاء مباشرة في الشيت.</p>
+          </div>
+
+          <div class="space-y-3">
+            <label for="adm-sheets-url" class="block text-xs font-bold text-slate-700">رابط Google Apps Script (Web App URL)</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="adm-sheets-url" type="url" dir="ltr" placeholder="https://script.google.com/macros/s/...../exec" class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm text-left focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+              <button id="btn-save-sheets-url" type="button" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 shrink-0">
+                <i data-lucide="link" class="w-4 h-4"></i>
+                <span>حفظ ومزامنة</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Ready Links Box -->
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+            <h4 class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="share-2" class="w-4 h-4 text-teal-600"></i>
+              <span>الروابط الجاهزة بعد رفع التطبيق (تخفي لوحة الأدمن تلقائياً عن الزملاء)</span>
+            </h4>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">1. رابط الزملاء (يفتح على إعلان الدورة واستمارة التسجيل فقط):</label>
+              <div class="flex gap-2">
+                <input id="link-colleagues-preview" type="text" readonly dir="ltr" class="flex-1 bg-white rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 font-mono" />
+                <button id="btn-copy-colleagues-link" type="button" class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shrink-0">نسخ</button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">2. رابط لوحة الأدمن (لإدارة الدورة وطباعة الخطابات):</label>
+              <div class="flex gap-2">
+                <input id="link-admin-preview" type="text" readonly dir="ltr" class="flex-1 bg-white rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 font-mono" />
+                <button id="btn-copy-admin-link" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shrink-0">نسخ</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin PIN Security -->
+          <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="shield" class="w-4 h-4 text-amber-700"></i>
+                <span class="text-xs font-extrabold text-slate-800">حماية لوحة الأدمن برقم سري (PIN)</span>
+              </div>
+              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                <input id="adm-pin-enabled" type="checkbox" class="w-4 h-4 rounded text-amber-600" />
+                <span>تفعيل القفل</span>
+              </label>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="adm-pin-value" type="text" dir="ltr" maxlength="12" placeholder="الرقم السري (مثلاً 1234)" class="w-44 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs text-center font-mono font-bold outline-none" />
+              <button id="btn-save-pin" type="button" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition">حفظ إعداد القفل</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apps Script Code Box -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <i data-lucide="code-2" class="w-5 h-5 text-sky-600"></i>
+              <span>كود Google Apps Script المحدث (9 أعمدة)</span>
+            </h3>
+            <button id="btn-copy-gas-code" type="button" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>نسخ الكود</span>
+            </button>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            افتح ملف Google Sheet الخاص بك ← اختر <strong>Extensions</strong> ← <strong>Apps Script</strong> ← الصق هذا الكود في <code>Code.gs</code> ثم اضغط <strong>Deploy ← New deployment ← Web app</strong> (اجعل الوصول <strong>Anyone</strong>) وانسخ الرابط هنا.
+          </p>
+          <pre id="gas-code-preview" dir="ltr" class="bg-slate-900 text-emerald-300 rounded-xl p-3.5 text-[11px] font-mono overflow-x-auto max-h-72 leading-relaxed"></pre>
+          <button id="btn-download-gas-code" type="button" class="w-full px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>تحميل ملف Code.gs</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Dedicated Print Wrapper -->
+  <div id="print-only-wrapper" class="hidden">
+    <div id="print-letter-content" class="a4-sheet"></div>
+  </div>
+
+  <!-- Quick Nomination from Saved Colleagues Directory Modal -->
+  <div id="modal-directory" class="no-print hidden fixed inset-0 z-50 bg-slate-900/65 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-violet-900 text-white flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i data-lucide="zap" class="w-5 h-5 text-amber-300"></i>
+            <span>الترشيح السريع من دليل الزملاء السابقين</span>
+          </h3>
+          <p class="text-xs text-violet-200 mt-0.5">اختر أي زميل مسجل سابقاً لإضافته فوراً إلى الدورة الحالية دون انتظاره</p>
+        </div>
+        <button id="btn-close-directory" type="button" class="text-violet-200 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-4 border-b border-slate-100 bg-slate-50">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+          <input id="dir-search-input" type="text" placeholder="ابحث بالاسم، الوظيفة، الموبايل، أو البريد الإلكتروني..." class="w-full rounded-xl border border-slate-300 bg-white pr-10 pl-4 py-2 text-sm focus:border-violet-600 outline-none" />
+        </div>
+      </div>
+      <div id="directory-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 p-2"></div>
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <span>إجمالي الزملاء المحفوظين في الدليل: <strong id="dir-total-count" class="text-slate-800">0</strong></span>
+        <button id="btn-done-directory" type="button" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin PIN Modal -->
+  <div id="modal-pin" class="no-print hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-4 border border-slate-200 text-center">
+      <div class="w-12 h-12 mx-auto rounded-full bg-slate-900 text-teal-400 flex items-center justify-center">
+        <i data-lucide="key-round" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-slate-900">دخول لوحة تحكم الأدمن</h3>
+      <form id="form-pin-unlock" class="space-y-3">
+        <input id="input-pin-attempt" type="password" dir="ltr" placeholder="أدخل الرقم السري" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-center font-mono text-sm focus:border-teal-600 outline-none" />
+        <p id="err-pin-attempt" class="hidden text-xs text-rose-600 font-bold">الرقم السري غير صحيح</p>
+        <div class="flex gap-2">
+          <button id="btn-cancel-pin" type="button" class="flex-1 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold">إلغاء</button>
+          <button type="submit" class="flex-1 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold">دخول</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add / Edit Registrant Modal -->
+  <div id="modal-registrant" class="no-print hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <h3 id="modal-registrant-title" class="font-bold text-base">تعديل بيانات المتقدم</h3>
+        <button id="btn-close-reg-modal" type="button" class="text-slate-300 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="form-edit-registrant" class="p-6 space-y-4">
+        <input id="edit-reg-id" type="hidden" />
+        <div>
+          <label for="edit-reg-fullname" class="block text-xs font-bold text-slate-700 mb-1">الاسم رباعي</label>
+          <input id="edit-reg-fullname" type="text" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+        </div>
+        <div>
+          <label for="edit-reg-job" class="block text-xs font-bold text-slate-700 mb-1">الوظيفة</label>
+          <input id="edit-reg-job" type="text" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="edit-reg-phone" class="block text-xs font-bold text-slate-700 mb-1">رقم الموبايل</label>
+            <input id="edit-reg-phone" type="tel" dir="ltr" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-left focus:border-teal-600 outline-none" />
+          </div>
+          <div>
+            <label for="edit-reg-email" class="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني</label>
+            <input id="edit-reg-email" type="email" dir="ltr" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-left focus:border-teal-600 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label for="edit-reg-course" class="block text-xs font-bold text-slate-700 mb-1">الدورة التدريبية</label>
+          <input id="edit-reg-course" type="text" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+        </div>
+        <div class="flex flex-wrap gap-4 pt-1">
+          <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+            <input id="edit-reg-confirmed" type="checkbox" class="w-4 h-4 rounded text-teal-600" />
+            <span>أكد الرغبة في الالتحاق</span>
+          </label>
+          <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+            <input id="edit-reg-selected" type="checkbox" class="w-4 h-4 rounded text-teal-600" />
+            <span>مشمول في خطاب الترشيح</span>
+          </label>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button id="btn-cancel-reg-modal" type="button" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm">حفظ التعديلات</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div id="modal-confirm-delete" class="no-print hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 border border-slate-200 text-center">
+      <div class="w-12 h-12 mx-auto rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+        <i data-lucide="trash-2" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-slate-900">تأكيد حذف المتقدم</h3>
+      <p id="delete-confirm-text" class="text-xs text-slate-600 leading-relaxed"></p>
+      <div class="flex items-center justify-center gap-2 pt-2">
+        <button id="btn-cancel-delete" type="button" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold">إلغاء</button>
+        <button id="btn-confirm-delete" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">نعم، احذف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Lightbox Modal -->
+  <div id="modal-lightbox" class="no-print hidden fixed inset-0 z-50 bg-slate-950/85 flex items-center justify-center p-4">
+    <button id="btn-close-lightbox" type="button" class="absolute top-4 left-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2">
+      <i data-lucide="x" class="w-6 h-6"></i>
+    </button>
+    <img id="lightbox-img" src="" alt="صورة الإعلان" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain" />
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="no-print fixed bottom-5 left-5 z-50 space-y-2 max-w-xs w-full pointer-events-none"></div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'training_nomination_portal_v3';
+
+      const GAS_SCRIPT_SOURCE = [
+        'function doGet(e) {',
+        '  const ss = SpreadsheetApp.getActiveSpreadsheet();',
+        '  const regSheet = ss.getSheetByName("Registrants") || ss.insertSheet("Registrants");',
+        '  const cfgSheet = ss.getSheetByName("CourseSettings") || ss.insertSheet("CourseSettings");',
+        '  const regRows = regSheet.getDataRange().getValues().slice(1);',
+        '  const registrants = regRows.filter(function(r){ return r[0]; }).map(function(r){',
+        '    return {',
+        '      id: String(r[0]),',
+        '      fullName: String(r[1] || ""),',
+        '      jobTitle: String(r[2] || ""),',
+        '      phone: String(r[3] || ""),',
+        '      email: String(r[4] || ""),',
+        '      confirmed: r[5] === "نعم" || r[5] === true,',
+        '      selectedForLetter: r[6] === "نعم" || r[6] === true,',
+        '      registeredAt: String(r[7] || ""),',
+        '      courseTitle: String(r[8] || "")',
+        '    };',
+        '  });',
+        '  const cfgRows = cfgSheet.getDataRange().getValues().slice(1);',
+        '  const course = {};',
+        '  cfgRows.forEach(function(r){ if (r[0]) course[String(r[0])] = r[1]; });',
+        '  if (typeof course.isOpen !== "undefined") {',
+        '    course.isOpen = String(course.isOpen).toLowerCase() === "true";',
+        '  }',
+        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok", registrants: registrants, course: course }))',
+        '    .setMimeType(ContentService.MimeType.JSON);',
+        '}',
+        '',
+        'function doPost(e) {',
+        '  const ss = SpreadsheetApp.getActiveSpreadsheet();',
+        '  const regSheet = ss.getSheetByName("Registrants") || ss.insertSheet("Registrants");',
+        '  const cfgSheet = ss.getSheetByName("CourseSettings") || ss.insertSheet("CourseSettings");',
+        '  const body = JSON.parse(e.postData.contents || "{}");',
+        '  const action = body.action || "add";',
+        '  if (action === "add") {',
+        '    const p = body.data;',
+        '    regSheet.appendRow([p.id, p.fullName, p.jobTitle, "\'" + p.phone, p.email, p.confirmed ? "نعم" : "لا", p.selectedForLetter ? "نعم" : "لا", p.registeredAt, p.courseTitle || ""]);',
+        '  } else if (action === "update") {',
+        '    const p = body.data;',
+        '    const vals = regSheet.getDataRange().getValues();',
+        '    for (var i = 1; i < vals.length; i++) {',
+        '      if (String(vals[i][0]) === String(p.id)) {',
+        '        regSheet.getRange(i + 1, 1, 1, 9).setValues([[p.id, p.fullName, p.jobTitle, "\'" + p.phone, p.email, p.confirmed ? "نعم" : "لا", p.selectedForLetter ? "نعم" : "لا", p.registeredAt, p.courseTitle || ""]]);',
+        '        break;',
+        '      }',
+        '    }',
+        '  } else if (action === "delete") {',
+        '    const vals = regSheet.getDataRange().getValues();',
+        '    for (var j = 1; j < vals.length; j++) {',
+        '      if (String(vals[j][0]) === String(body.id)) {',
+        '        regSheet.deleteRow(j + 1);',
+        '        break;',
+        '      }',
+        '    }',
+        '  } else if (action === "saveCourse") {',
+        '    const c = body.data || {};',
+        '    cfgSheet.clearContents();',
+        '    cfgSheet.appendRow(["Key", "Value"]);',
+        '    Object.keys(c).forEach(function(k){ cfgSheet.appendRow([k, String(c[k] || "")]); });',
+        '  }',
+        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))',
+        '    .setMimeType(ContentService.MimeType.JSON);',
+        '}'
+      ].join('\n');
+
+      const CURRENT_DEFAULT_COURSE = 'تطبيقات نظم المعلومات الجغرافية (GIS) والتحليل المكاني في إدارة الموارد المائية';
+      const ARCHIVE_SAMPLE_COURSE = 'تحليل البيانات وإعداد التقارير التفاعلية باستخدام Power BI';
+
+      const defaultState = {
+        viewMode: 'admin',
+        activeTab: 'tab-course',
+        sheetsApiUrl: '',
+        adminPinEnabled: false,
+        adminPin: '1234',
+        courseFilter: '__CURRENT__',
+        exportCourseTarget: '__CURRENT__',
+        course: {
+          title: CURRENT_DEFAULT_COURSE,
+          organizer: 'مركز التدريب الإقليمي للموارد المائية والري',
+          dateRange: 'من 13 ديسمبر 2026 إلى 17 ديسمبر 2026',
+          location: 'مقر مركز التدريب - السادس من أكتوبر (حضورياً)',
+          deadline: '2026-12-05',
+          isOpen: true,
+          adText: 'يسر إدارة التدريب الإعلان عن فتح باب التسجيل للدورة التدريبية المتخصصة في نظم المعلومات الجغرافية (GIS).\n\n• الفئة المستهدفة: المهندسون والأخصائيون بالإدارات الفنية.\n• الشروط: الالتزام بالحضور الكامل طوال أيام الدورة.\n• يرجى تسجيل البيانات بدقة لاعتمادها في خطاب الترشيح الرسمي.',
+          adImageDataUrl: ''
+        },
+        registrants: [
+          {
+            id: 'reg_1',
+            fullName: 'أحمد محمود عبد الرحمن حسن',
+            jobTitle: 'مهندس مدني - إدارة التطوير',
+            phone: '01012345678',
+            email: 'ahmed.mahmoud@mwri.gov.eg',
+            confirmed: true,
+            selectedForLetter: true,
+            registeredAt: '2026/11/22',
+            courseTitle: CURRENT_DEFAULT_COURSE
+          },
+          {
+            id: 'reg_2',
+            fullName: 'سارة إبراهيم محمد علي',
+            jobTitle: 'أخصائي نظم معلومات جغرافية',
+            phone: '01123456789',
+            email: 'sara.ibrahim@mwri.gov.eg',
+            confirmed: true,
+            selectedForLetter: true,
+            registeredAt: '2026/11/23',
+            courseTitle: CURRENT_DEFAULT_COURSE
+          },
+          {
+            id: 'reg_3',
+            fullName: 'كريم طارق السيد عبد الله',
+            jobTitle: 'مهندس ري وصرف - قطاع التخطيط',
+            phone: '01234567890',
+            email: 'karim.tarek@mwri.gov.eg',
+            confirmed: true,
+            selectedForLetter: true,
+            registeredAt: '2026/11/23',
+            courseTitle: CURRENT_DEFAULT_COURSE
+          },
+          {
+            id: 'reg_arch_1',
+            fullName: 'ياسر محمد عبد العزيز سالم',
+            jobTitle: 'مهندس ميكانيكا - إدارة المشروعات',
+            phone: '01098765432',
+            email: 'yasser.salem@mwri.gov.eg',
+            confirmed: true,
+            selectedForLetter: true,
+            registeredAt: '2026/10/14',
+            courseTitle: ARCHIVE_SAMPLE_COURSE
+          },
+          {
+            id: 'reg_arch_2',
+            fullName: 'نهى حسن مصطفى إبراهيم',
+            jobTitle: 'أخصائي تحليل بيانات وتقارير',
+            phone: '01554321987',
+            email: 'noha.hassan@mwri.gov.eg',
+            confirmed: true,
+            selectedForLetter: true,
+            registeredAt: '2026/10/15',
+            courseTitle: ARCHIVE_SAMPLE_COURSE
+          }
+        ],
+        template: {
+          mode: 'standard',
+          letterheadImageDataUrl: '',
+          headerRight: 'جمهورية مصر العربية\nوزارة الموارد المائية والري\nالإدارة المركزية للتدريب والتطوير',
+          headerLeft: 'التاريخ: {{TODAY}}\nرقم الإشارة: ترشيح / 2026',
+          recipientTitle: 'السيد الأستاذ الدكتور / مدير مركز التدريب الإقليمي للموارد المائية والري',
+          greeting: 'تحية طيبة وبعد،،،',
+          introParagraph: 'إيماءً إلى الإعلان الوارد بشأن إقامة الدورة التدريبية بعنوان «{{COURSE_TITLE}}» والمزمع عقدها خلال الفترة ({{COURSE_DATE}}) في ({{LOCATION}})، نتشرف بترشيح السادة الموضحة بياناتهم أدناه (وعددهم {{COUNT}}) لحضور الدورة التدريبية المشار إليها، وذلك بناءً على رغبتهم الأكيدة في الالتحاق:',
+          closingParagraph: 'برجاء التفضل بالنظر والموافقة على تسجيل السادة المرشحين واتخاذ ما يلزم نحو إلحاقهم بالدورة التدريبية.\nوتفضلوا بقبول فائق الاحترام والتقدير،،،',
+          signerTitle: 'مدير عام الإدارة',
+          signerName: 'م / ...............................',
+          customTemplateHtml: '',
+          customTemplateName: ''
+        }
+      };
+
+      let state = loadState();
+      let pendingDeleteId = null;
+      let adminUnlocked = false;
+      let isLockedPublicLink = false;
+
+      (function parseUrlParams() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const apiParam = params.get('api');
+          if (apiParam && apiParam.startsWith('https://')) {
+            state.sheetsApiUrl = apiParam.trim();
+            saveState();
+          }
+        } catch (e) {}
+        if (window.location.hash === '#register') {
+          state.viewMode = 'public';
+          isLockedPublicLink = true;
+        } else if (window.location.hash === '#admin') {
+          state.viewMode = 'admin';
+          isLockedPublicLink = false;
+        }
+      })();
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return JSON.parse(JSON.stringify(defaultState));
+          const parsed = JSON.parse(raw);
+          const course = Object.assign({}, defaultState.course, parsed.course || {});
+          const regs = (Array.isArray(parsed.registrants) ? parsed.registrants : defaultState.registrants.slice()).map(function (r) {
+            return Object.assign({ courseTitle: course.title }, r);
+          });
+          return {
+            viewMode: parsed.viewMode || 'admin',
+            activeTab: parsed.activeTab || 'tab-course',
+            sheetsApiUrl: parsed.sheetsApiUrl || '',
+            adminPinEnabled: Boolean(parsed.adminPinEnabled),
+            adminPin: parsed.adminPin || '1234',
+            courseFilter: parsed.courseFilter || '__CURRENT__',
+            exportCourseTarget: parsed.exportCourseTarget || '__CURRENT__',
+            course: course,
+            registrants: regs,
+            template: Object.assign({}, defaultState.template, parsed.template || {})
+          };
+        } catch (e) {
+          return JSON.parse(JSON.stringify(defaultState));
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {}
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getTodayArabic() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        return yyyy + '/' + mm + '/' + dd;
+      }
+
+      function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const colors = type === 'error'
+          ? 'bg-rose-600 text-white'
+          : type === 'info'
+          ? 'bg-slate-900 text-white'
+          : 'bg-emerald-600 text-white';
+        const el = document.createElement('div');
+        el.className = 'toast-enter pointer-events-auto rounded-xl px-4 py-3 text-xs sm:text-sm font-bold shadow-lg flex items-center gap-2 ' + colors;
+        el.textContent = message;
+        container.appendChild(el);
+        setTimeout(function () {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.25s ease';
+          setTimeout(function () { el.remove(); }, 250);
+        }, 3200);
+      }
+
+      // ==================== DIRECTORY & COURSE HELPERS ====================
+
+      function getCurrentCourseTitle() {
+        return (state.course.title || '').trim();
+      }
+
+      function getAllCourseTitles() {
+        const set = new Set();
+        if (getCurrentCourseTitle()) set.add(getCurrentCourseTitle());
+        state.registrants.forEach(function (r) {
+          if (r.courseTitle && r.courseTitle.trim()) set.add(r.courseTitle.trim());
+        });
+        return Array.from(set);
+      }
+
+      function getUniqueDirectory() {
+        const map = new Map();
+        state.registrants.forEach(function (r) {
+          const key = (r.phone || '').replace(/\s+/g, '') || (r.email || '').toLowerCase().trim() || (r.fullName || '').trim();
+          if (!key) return;
+          if (!map.has(key)) {
+            map.set(key, {
+              key: key,
+              fullName: r.fullName,
+              jobTitle: r.jobTitle,
+              phone: r.phone,
+              email: r.email,
+              courses: new Set()
+            });
+          } else {
+            // Keep latest details
+            const existing = map.get(key);
+            existing.fullName = r.fullName || existing.fullName;
+            existing.jobTitle = r.jobTitle || existing.jobTitle;
+            existing.phone = r.phone || existing.phone;
+            existing.email = r.email || existing.email;
+          }
+          if (r.courseTitle) map.get(key).courses.add(r.courseTitle);
+        });
+        return Array.from(map.values());
+      }
+
+      function isPersonInCurrentCourse(person) {
+        const curr = getCurrentCourseTitle();
+        const pPhone = (person.phone || '').replace(/\s+/g, '');
+        const pEmail = (person.email || '').toLowerCase().trim();
+        const pName = (person.fullName || '').trim();
+        return state.registrants.some(function (r) {
+          if ((r.courseTitle || '').trim() !== curr) return false;
+          const rPhone = (r.phone || '').replace(/\s+/g, '');
+          const rEmail = (r.email || '').toLowerCase().trim();
+          return (pPhone && rPhone === pPhone) || (pEmail && rEmail === pEmail) || (r.fullName || '').trim() === pName;
+        });
+      }
+
+      function getExportTargetCourseTitle() {
+        if (state.exportCourseTarget === '__CURRENT__' || !state.exportCourseTarget) {
+          return getCurrentCourseTitle();
+        }
+        return state.exportCourseTarget;
+      }
+
+      function getSelectedForExport() {
+        const target = getExportTargetCourseTitle();
+        return state.registrants.filter(function (r) {
+          return r.selectedForLetter && (r.courseTitle || '').trim() === target;
+        });
+      }
+
+      // ==================== GOOGLE SHEETS SYNC ====================
+
+      function isValidSheetsUrl(url) {
+        return typeof url === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/.+/.test(url.trim());
+      }
+
+      async function syncFromSheets(silent) {
+        if (!isValidSheetsUrl(state.sheetsApiUrl)) {
+          if (!silent) showToast('يرجى إدخال رابط Google Apps Script أولاً', 'info');
+          return false;
+        }
+        try {
+          const res = await fetch(state.sheetsApiUrl.trim(), { method: 'GET' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const json = await res.json();
+          if (json && json.status === 'ok') {
+            if (json.course && Object.keys(json.course).length > 0) {
+              state.course = Object.assign({}, state.course, json.course);
+            }
+            if (Array.isArray(json.registrants)) {
+              state.registrants = json.registrants.map(function (r) {
+                return Object.assign({ courseTitle: state.course.title }, r, {
+                  courseTitle: r.courseTitle || state.course.title
+                });
+              });
+            }
+            saveState();
+            renderAll();
+            if (!silent) showToast('تمت المزامنة مع Google Sheets بنجاح', 'success');
+            return true;
+          }
+          throw new Error('Bad payload');
+        } catch (err) {
+          if (!silent) showToast('تعذر الاتصال بـ Google Sheets، تأكد من نشر الرابط بصلاحية Anyone', 'error');
+          return false;
+        }
+      }
+
+      async function pushToSheets(payload) {
+        if (!isValidSheetsUrl(state.sheetsApiUrl)) return false;
+        try {
+          await fetch(state.sheetsApiUrl.trim(), {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function buildShareUrls() {
+        let base = '';
+        try {
+          base = window.location.href.split('#')[0].split('?')[0];
+          if (!base.startsWith('http')) {
+            base = 'https://your-hosted-app-url.com/';
+          }
+        } catch (e) {
+          base = 'https://your-hosted-app-url.com/';
+        }
+        const query = isValidSheetsUrl(state.sheetsApiUrl)
+          ? '?api=' + encodeURIComponent(state.sheetsApiUrl.trim())
+          : '';
+        return {
+          colleagues: base + query + '#register',
+          admin: base + query + '#admin'
+        };
+      }
+
+      // ==================== RENDERING ====================
+
+      function renderAll() {
+        renderViewMode();
+        renderPublicView();
+        renderAdminCourseTab();
+        renderCourseSelectors();
+        renderRegistrantsTable();
+        renderTemplateTab();
+        renderSheetsTab();
+        renderLetterPreview();
+        renderKPIs();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      }
+
+      function renderViewMode() {
+        const pubView = document.getElementById('view-public');
+        const admView = document.getElementById('view-admin');
+        const btnPub = document.getElementById('btn-mode-public');
+        const btnAdm = document.getElementById('btn-mode-admin');
+        const switcher = document.getElementById('header-mode-switcher');
+        const pubFooter = document.getElementById('pub-admin-footer');
+
+        if (state.viewMode === 'public') {
+          pubView.classList.remove('hidden');
+          admView.classList.add('hidden');
+          btnPub.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow';
+          btnAdm.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+          if (isLockedPublicLink) {
+            switcher.classList.add('hidden');
+            pubFooter.classList.remove('hidden');
+          } else {
+            switcher.classList.remove('hidden');
+            pubFooter.classList.add('hidden');
+          }
+        } else {
+          pubView.classList.add('hidden');
+          admView.classList.remove('hidden');
+          switcher.classList.remove('hidden');
+          pubFooter.classList.add('hidden');
+          btnAdm.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow';
+          btnPub.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        }
+
+        document.querySelectorAll('.admin-panel').forEach(function (panel) {
+          panel.classList.toggle('hidden', panel.id !== state.activeTab);
+        });
+        document.querySelectorAll('.admin-tab').forEach(function (btn) {
+          const isActive = btn.getAttribute('data-tab') === state.activeTab;
+          btn.className = isActive
+            ? 'admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-slate-900 text-white shadow-sm'
+            : 'admin-tab flex-1 min-w-[130px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100';
+        });
+
+        const dot = document.getElementById('sync-dot');
+        const label = document.getElementById('sync-label');
+        if (isValidSheetsUrl(state.sheetsApiUrl)) {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+          label.textContent = 'متصل بـ Google Sheets';
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          label.textContent = 'حفظ محلي';
+        }
+      }
+
+      function renderKPIs() {
+        const curr = getCurrentCourseTitle();
+        const currentRegs = state.registrants.filter(function (r) { return (r.courseTitle || '').trim() === curr; });
+        const selectedCurrent = currentRegs.filter(function (r) { return r.selectedForLetter; }).length;
+        const dirCount = getUniqueDirectory().length;
+
+        document.getElementById('kpi-total').textContent = currentRegs.length;
+        document.getElementById('kpi-selected').textContent = selectedCurrent;
+        document.getElementById('kpi-directory-count').textContent = dirCount;
+        document.getElementById('tab-count-badge').textContent = currentRegs.length;
+        document.getElementById('export-selected-count').textContent = getSelectedForExport().length;
+
+        const statusEl = document.getElementById('kpi-reg-status');
+        if (state.course.isOpen) {
+          statusEl.textContent = 'مفتوح';
+          statusEl.className = 'text-sm font-bold text-emerald-700 mt-0.5';
+        } else {
+          statusEl.textContent = 'مغلق';
+          statusEl.className = 'text-sm font-bold text-rose-600 mt-0.5';
+        }
+      }
+
+      function renderCourseSelectors() {
+        const courses = getAllCourseTitles();
+        const curr = getCurrentCourseTitle();
+
+        // Filter dropdown in Registrants tab
+        const filterSel = document.getElementById('adm-course-filter');
+        const filterOpts = [
+          '<option value="__CURRENT__">الدورة الحالية فقط</option>',
+          '<option value="__ALL__">جميع الدورات (الأرشيف الكامل)</option>'
+        ];
+        courses.forEach(function (cTitle) {
+          if (cTitle !== curr) {
+            filterOpts.push('<option value="' + escapeHtml(cTitle) + '">أرشيف: ' + escapeHtml(cTitle.slice(0, 48)) + '</option>');
+          }
+        });
+        filterSel.innerHTML = filterOpts.join('');
+        filterSel.value = state.courseFilter || '__CURRENT__';
+        if (!filterSel.value) {
+          state.courseFilter = '__CURRENT__';
+          filterSel.value = '__CURRENT__';
+        }
+
+        // Export course selector in Print / Word tab
+        const expSel = document.getElementById('export-course-select');
+        const expOpts = ['<option value="__CURRENT__">الدورة الحالية: ' + escapeHtml(curr.slice(0, 42)) + '</option>'];
+        courses.forEach(function (cTitle) {
+          if (cTitle !== curr) {
+            expOpts.push('<option value="' + escapeHtml(cTitle) + '">دورة سابقة: ' + escapeHtml(cTitle.slice(0, 42)) + '</option>');
+          }
+        });
+        expSel.innerHTML = expOpts.join('');
+        expSel.value = state.exportCourseTarget || '__CURRENT__';
+        if (!expSel.value) {
+          state.exportCourseTarget = '__CURRENT__';
+          expSel.value = '__CURRENT__';
+        }
+      }
+
+      function renderPublicView() {
+        const c = state.course;
+        document.getElementById('pub-course-title').textContent = c.title || 'دورة تدريبية متاحة للتسجيل';
+        document.getElementById('pub-organizer-badge').textContent = c.organizer || '';
+        document.getElementById('pub-course-date').textContent = c.dateRange || 'يحدد لاحقاً';
+        document.getElementById('pub-course-location').textContent = c.location || 'يحدد لاحقاً';
+        document.getElementById('pub-course-deadline').textContent = c.deadline || 'غير محدد';
+
+        const statusBadge = document.getElementById('pub-status-badge');
+        const form = document.getElementById('public-registration-form');
+        const closedNotice = document.getElementById('pub-closed-notice');
+        const successState = document.getElementById('pub-success-state');
+
+        if (c.isOpen) {
+          statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> التسجيل متاح الآن';
+          statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30';
+          closedNotice.classList.add('hidden');
+          if (successState.classList.contains('hidden')) {
+            form.classList.remove('hidden');
+          }
+        } else {
+          statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> التسجيل مغلق';
+          statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-200 border border-rose-400/30';
+          form.classList.add('hidden');
+          successState.classList.add('hidden');
+          closedNotice.classList.remove('hidden');
+        }
+
+        const adSec = document.getElementById('pub-ad-section');
+        const imgWrap = document.getElementById('pub-ad-image-wrap');
+        const imgEl = document.getElementById('pub-ad-image');
+        const textEl = document.getElementById('pub-ad-text');
+
+        const hasImg = Boolean(c.adImageDataUrl);
+        const hasText = Boolean(c.adText && c.adText.trim());
+
+        if (!hasImg && !hasText) {
+          adSec.classList.add('hidden');
+        } else {
+          adSec.classList.remove('hidden');
+          if (hasImg) {
+            imgWrap.classList.remove('hidden');
+            imgEl.src = c.adImageDataUrl;
+          } else {
+            imgWrap.classList.add('hidden');
+          }
+          if (hasText) {
+            textEl.classList.remove('hidden');
+            textEl.textContent = c.adText;
+          } else {
+            textEl.classList.add('hidden');
+          }
+        }
+      }
+
+      function renderAdminCourseTab() {
+        const c = state.course;
+        document.getElementById('adm-course-open').checked = Boolean(c.isOpen);
+        document.getElementById('adm-course-title').value = c.title || '';
+        document.getElementById('adm-course-organizer').value = c.organizer || '';
+        document.getElementById('adm-course-date').value = c.dateRange || '';
+        document.getElementById('adm-course-location').value = c.location || '';
+        document.getElementById('adm-course-deadline').value = c.deadline || '';
+        document.getElementById('adm-ad-text').value = c.adText || '';
+
+        const prevWrap = document.getElementById('adm-ad-image-preview-wrap');
+        const prevImg = document.getElementById('adm-ad-image-preview');
+        const placeholder = document.getElementById('adm-ad-image-placeholder');
+        if (c.adImageDataUrl) {
+          prevImg.src = c.adImageDataUrl;
+          prevWrap.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        } else {
+          prevImg.src = '';
+          prevWrap.classList.add('hidden');
+          placeholder.classList.remove('hidden');
+        }
+      }
+
+      function renderSheetsTab() {
+        document.getElementById('adm-sheets-url').value = state.sheetsApiUrl || '';
+        document.getElementById('adm-pin-enabled').checked = Boolean(state.adminPinEnabled);
+        document.getElementById('adm-pin-value').value = state.adminPin || '1234';
+        const urls = buildShareUrls();
+        document.getElementById('link-colleagues-preview').value = urls.colleagues;
+        document.getElementById('link-admin-preview').value = urls.admin;
+        document.getElementById('gas-code-preview').textContent = GAS_SCRIPT_SOURCE;
+      }
+
+      function getFilteredRegistrants() {
+        const q = (document.getElementById('adm-search-input').value || '').trim().toLowerCase();
+        const curr = getCurrentCourseTitle();
+        const scope = state.courseFilter || '__CURRENT__';
+
+        return state.registrants.filter(function (r) {
+          const rCourse = (r.courseTitle || '').trim();
+          if (scope === '__CURRENT__' && rCourse !== curr) return false;
+          if (scope !== '__CURRENT__' && scope !== '__ALL__' && rCourse !== scope) return false;
+          if (!q) return true;
+          return (
+            (r.fullName || '').toLowerCase().includes(q) ||
+            (r.jobTitle || '').toLowerCase().includes(q) ||
+            (r.phone || '').toLowerCase().includes(q) ||
+            (r.email || '').toLowerCase().includes(q) ||
+            rCourse.toLowerCase().includes(q)
+          );
+        });
+      }
+
+      function renderRegistrantsTable() {
+        const tbody = document.getElementById('registrants-tbody');
+        const emptyEl = document.getElementById('registrants-empty');
+        const thCourse = document.getElementById('th-course-col');
+        const showCourseCol = state.courseFilter !== '__CURRENT__';
+        thCourse.classList.toggle('hidden', !showCourseCol);
+
+        const filtered = getFilteredRegistrants();
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = '';
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+        emptyEl.classList.add('hidden');
+
+        tbody.innerHTML = filtered.map(function (r, idx) {
+          const confirmBadge = r.confirmed
+            ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">مؤكد</span>'
+            : '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">غير مؤكد</span>';
+          const courseCell = showCourseCol
+            ? '<td class="py-3 px-4 text-xs text-slate-600 max-w-[200px] truncate" title="' + escapeHtml(r.courseTitle) + '">' + escapeHtml(r.courseTitle || '—') + '</td>'
+            : '';
+          return (
+            '<tr class="hover:bg-slate-50/80 transition">' +
+              '<td class="py-3 px-4 text-center">' +
+                '<input type="checkbox" data-action="toggle-select" data-id="' + escapeHtml(r.id) + '" ' + (r.selectedForLetter ? 'checked' : '') + ' class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer" />' +
+              '</td>' +
+              '<td class="py-3 px-4 text-center text-xs font-bold text-slate-500">' + (idx + 1) + '</td>' +
+              '<td class="py-3 px-4 font-bold text-slate-900">' + escapeHtml(r.fullName) + '</td>' +
+              '<td class="py-3 px-4 text-slate-700">' + escapeHtml(r.jobTitle) + '</td>' +
+              '<td class="py-3 px-4 text-slate-700 font-mono text-xs" dir="ltr">' + escapeHtml(r.phone) + '</td>' +
+              '<td class="py-3 px-4 text-slate-700 text-xs" dir="ltr">' + escapeHtml(r.email) + '</td>' +
+              courseCell +
+              '<td class="py-3 px-4 text-center">' + confirmBadge + '</td>' +
+              '<td class="py-3 px-4 text-center">' +
+                '<div class="inline-flex items-center gap-1">' +
+                  '<button type="button" data-action="edit" data-id="' + escapeHtml(r.id) + '" class="p-1.5 rounded-lg text-sky-700 hover:bg-sky-100 transition" title="تعديل البيانات">' +
+                    '<i data-lucide="pencil" class="w-4 h-4"></i>' +
+                  '</button>' +
+                  '<button type="button" data-action="delete" data-id="' + escapeHtml(r.id) + '" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-100 transition" title="حذف">' +
+                    '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+                  '</button>' +
+                '</div>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+
+      function renderDirectoryModal() {
+        const listEl = document.getElementById('directory-list');
+        const q = (document.getElementById('dir-search-input').value || '').trim().toLowerCase();
+        const dir = getUniqueDirectory();
+        document.getElementById('dir-total-count').textContent = dir.length;
+
+        const filtered = dir.filter(function (p) {
+          if (!q) return true;
+          return (
+            (p.fullName || '').toLowerCase().includes(q) ||
+            (p.jobTitle || '').toLowerCase().includes(q) ||
+            (p.phone || '').toLowerCase().includes(q) ||
+            (p.email || '').toLowerCase().includes(q)
+          );
+        });
+
+        if (!filtered.length) {
+          listEl.innerHTML = '<div class="p-8 text-center text-xs text-slate-500">لا توجد نتائج مطابقة في سجل الزملاء.</div>';
+          return;
+        }
+
+        listEl.innerHTML = filtered.map(function (p) {
+          const alreadyIn = isPersonInCurrentCourse(p);
+          const coursesCount = p.courses.size;
+          const actionBtn = alreadyIn
+            ? '<span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0">مسجل بالدورة الحالية</span>'
+            : '<button type="button" data-quick-key="' + escapeHtml(p.key) + '" class="px-3.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition shrink-0 flex items-center gap-1"><span>+ ترشيح الآن</span></button>';
+
+          return (
+            '<div class="p-3.5 hover:bg-slate-50 rounded-xl flex flex-wrap items-center justify-between gap-3">' +
+              '<div class="space-y-0.5">' +
+                '<div class="font-bold text-sm text-slate-900">' + escapeHtml(p.fullName) + '</div>' +
+                '<div class="text-xs text-slate-600">' + escapeHtml(p.jobTitle) + '</div>' +
+                '<div class="text-[11px] text-slate-500 flex flex-wrap gap-3 pt-0.5">' +
+                  '<span dir="ltr">' + escapeHtml(p.phone) + '</span>' +
+                  '<span dir="ltr">' + escapeHtml(p.email) + '</span>' +
+                  '<span class="text-violet-700 font-semibold">دورات سابقة: ' + coursesCount + '</span>' +
+                '</div>' +
+              '</div>' +
+              actionBtn +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function renderTemplateTab() {
+        const t = state.template;
+        document.getElementById('tpl-header-right').value = t.headerRight || '';
+        document.getElementById('tpl-header-left').value = t.headerLeft || '';
+        document.getElementById('tpl-recipient').value = t.recipientTitle || '';
+        document.getElementById('tpl-greeting').value = t.greeting || '';
+        document.getElementById('tpl-intro').value = t.introParagraph || '';
+        document.getElementById('tpl-closing').value = t.closingParagraph || '';
+        document.getElementById('tpl-signer-title').value = t.signerTitle || '';
+        document.getElementById('tpl-signer-name').value = t.signerName || '';
+
+        const lhWrap = document.getElementById('tpl-letterhead-preview-wrap');
+        const lhImg = document.getElementById('tpl-letterhead-preview');
+        const btnRmLh = document.getElementById('btn-remove-letterhead');
+        if (t.letterheadImageDataUrl) {
+          lhImg.src = t.letterheadImageDataUrl;
+          lhWrap.classList.remove('hidden');
+          btnRmLh.classList.remove('hidden');
+        } else {
+          lhImg.src = '';
+          lhWrap.classList.add('hidden');
+          btnRmLh.classList.add('hidden');
+        }
+
+        const stdPill = document.getElementById('tpl-active-pill');
+        const cusPill = document.getElementById('custom-tpl-active-pill');
+        const cusFilename = document.getElementById('custom-tpl-filename');
+        const btnClearCus = document.getElementById('btn-clear-custom-tpl');
+
+        if (t.mode === 'custom' && t.customTemplateHtml) {
+          stdPill.classList.add('hidden');
+          cusPill.classList.remove('hidden');
+          cusFilename.textContent = 'الملف المرفوع: ' + (t.customTemplateName || 'تيمبلت مخصص');
+          btnClearCus.classList.remove('hidden');
+        } else {
+          stdPill.classList.remove('hidden');
+          cusPill.classList.add('hidden');
+          cusFilename.textContent = t.customTemplateName
+            ? 'آخر ملف مرفوع (غير مُفعّل): ' + t.customTemplateName
+            : 'لم يتم رفع ملف تيمبلت مخصص بعد';
+          btnClearCus.classList.add('hidden');
+        }
+      }
+
+      function buildNominationTableHtml(selectedList) {
+        if (!selectedList.length) {
+          return '<p style="text-align:center;color:#64748b;padding:12px;border:1px dashed #cbd5e1;">لا يوجد متقدمون محددون للترشيح في هذه الدورة حالياً.</p>';
+        }
+        const rows = selectedList.map(function (r, idx) {
+          return (
+            '<tr>' +
+              '<td class="center-cell" style="border:1px solid #334155;padding:7px;text-align:center;">' + (idx + 1) + '</td>' +
+              '<td style="border:1px solid #334155;padding:7px;font-weight:700;">' + escapeHtml(r.fullName) + '</td>' +
+              '<td style="border:1px solid #334155;padding:7px;">' + escapeHtml(r.jobTitle) + '</td>' +
+              '<td class="center-cell" style="border:1px solid #334155;padding:7px;text-align:center;direction:ltr;">' + escapeHtml(r.phone) + '</td>' +
+              '<td class="center-cell" style="border:1px solid #334155;padding:7px;text-align:center;direction:ltr;">' + escapeHtml(r.email) + '</td>' +
+              '<td class="center-cell" style="border:1px solid #334155;padding:7px;text-align:center;">' + (r.confirmed ? 'نعم' : 'لا') + '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        return (
+          '<table class="nomination-table" dir="rtl" style="width:100%;border-collapse:collapse;margin:16px 0 20px;font-size:13.5px;">' +
+            '<thead>' +
+              '<tr style="background-color:#f1f5f9;">' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;width:42px;">م</th>' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;">الاسم رباعي</th>' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;">الوظيفة</th>' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;">رقم الموبايل</th>' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;">البريد الإلكتروني</th>' +
+                '<th style="border:1px solid #334155;padding:8px;text-align:center;width:85px;">تأكيد الرغبة</th>' +
+              '</tr>' +
+            '</thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>'
+        );
+      }
+
+      function applyPlaceholders(text, selectedList, allowTableHtml) {
+        const c = state.course;
+        const activeCourseTitle = getExportTargetCourseTitle();
+        let out = String(text || '');
+        const map = {
+          '{{COURSE_TITLE}}': escapeHtml(activeCourseTitle || ''),
+          '{{ORGANIZER}}': escapeHtml(c.organizer || ''),
+          '{{COURSE_DATE}}': escapeHtml(c.dateRange || ''),
+          '{{LOCATION}}': escapeHtml(c.location || ''),
+          '{{TODAY}}': getTodayArabic(),
+          '{{COUNT}}': String(selectedList.length)
+        };
+        Object.keys(map).forEach(function (k) {
+          out = out.split(k).join(map[k]);
+        });
+        if (allowTableHtml) {
+          out = out.split('{{TABLE}}').join(buildNominationTableHtml(selectedList));
+        }
+        return out;
+      }
+
+      function buildLetterHtml() {
+        const t = state.template;
+        const selected = getSelectedForExport();
+
+        if (t.mode === 'custom' && t.customTemplateHtml) {
+          const isHtml = /<[a-z][\s\S]*>/i.test(t.customTemplateHtml);
+          const base = isHtml
+            ? t.customTemplateHtml
+            : '<div style="white-space:pre-line;line-height:2;">' + escapeHtml(t.customTemplateHtml) + '</div>';
+          return applyPlaceholders(base, selected, true);
+        }
+
+        const headerSection = t.letterheadImageDataUrl
+          ? '<div style="text-align:center;margin-bottom:18px;border-bottom:2px solid #0f172a;padding-bottom:12px;">' +
+              '<img src="' + t.letterheadImageDataUrl + '" alt="الترويسة الرسمية" style="max-height:110px;max-width:100%;object-fit:contain;margin:0 auto;" />' +
+              '<div style="text-align:left;font-size:12.5px;margin-top:6px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.headerLeft), selected, false) + '</div>' +
+            '</div>'
+          : '<table style="width:100%;border:none;border-bottom:2px solid #0f172a;margin-bottom:20px;padding-bottom:10px;">' +
+              '<tr>' +
+                '<td style="border:none;text-align:right;vertical-align:top;font-weight:700;font-size:13.5px;white-space:pre-line;line-height:1.7;">' + applyPlaceholders(escapeHtml(t.headerRight), selected, false) + '</td>' +
+                '<td style="border:none;text-align:left;vertical-align:top;font-size:13px;white-space:pre-line;line-height:1.7;">' + applyPlaceholders(escapeHtml(t.headerLeft), selected, false) + '</td>' +
+              '</tr>' +
+            '</table>';
+
+        return (
+          headerSection +
+          '<div style="text-align:center;margin:14px 0 18px;">' +
+            '<h2 style="font-size:18px;font-weight:800;margin:0;text-decoration:underline;">خطاب ترشيح لدورة تدريبية</h2>' +
+          '</div>' +
+          '<p style="font-size:15px;font-weight:700;margin:0 0 8px;">' + escapeHtml(t.recipientTitle) + '</p>' +
+          '<p style="font-size:14.5px;font-weight:600;margin:0 0 14px;text-align:center;">' + escapeHtml(t.greeting) + '</p>' +
+          '<p style="font-size:14.5px;text-align:justify;margin:0 0 12px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.introParagraph), selected, false) + '</p>' +
+          buildNominationTableHtml(selected) +
+          '<p style="font-size:14.5px;text-align:justify;margin:14px 0 32px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.closingParagraph), selected, false) + '</p>' +
+          '<table style="width:100%;border:none;margin-top:24px;">' +
+            '<tr>' +
+              '<td style="border:none;width:55%;"></td>' +
+              '<td style="border:none;text-align:center;font-weight:700;font-size:14.5px;line-height:2;">' +
+                '<div>' + escapeHtml(t.signerTitle) + '</div>' +
+                '<div style="margin-top:16px;">' + escapeHtml(t.signerName) + '</div>' +
+              '</td>' +
+            '</tr>' +
+          '</table>'
+        );
+      }
+
+      function renderLetterPreview() {
+        const html = buildLetterHtml();
+        document.getElementById('letter-preview-container').innerHTML = html;
+        document.getElementById('print-letter-content').innerHTML = html;
+        document.getElementById('export-selected-count').textContent = getSelectedForExport().length;
+      }
+
+      // ==================== EXPORT & CLIPBOARD ====================
+
+      function exportWordDocument() {
+        const letterHtml = buildLetterHtml();
+        const wordDoc =
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+          'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+          'xmlns="http://www.w3.org/TR/REC-html40" dir="rtl" lang="ar">' +
+          '<head><meta charset="utf-8" />' +
+          '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->' +
+          '<style>' +
+            '@page Section1 { size: 595.3pt 841.9pt; margin: 45pt 40pt 45pt 40pt; mso-header-margin: 35.4pt; mso-footer-margin: 35.4pt; }' +
+            'div.Section1 { page: Section1; }' +
+            'body { font-family: "Arial", "Traditional Arabic", "Tahoma", sans-serif; direction: rtl; text-align: right; color: #111827; line-height: 1.8; }' +
+            'table { border-collapse: collapse; width: 100%; }' +
+          '</style></head>' +
+          '<body><div class="Section1">' + letterHtml + '</div></body></html>';
+
+        const blob = new Blob(['\ufeff' + wordDoc], { type: 'application/msword;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const safeName = (getExportTargetCourseTitle() || 'دورة_تدريبية').replace(/[\\/:*?"<>|]/g, '').slice(0, 40).trim();
+        a.href = url;
+        a.download = 'جواب_ترشيح_' + (safeName || 'تدريب') + '.doc';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast('تم تصدير خطاب الترشيح كملف Word بنجاح', 'success');
+      }
+
+      function exportCsvFile() {
+        const selected = getSelectedForExport();
+        const headers = ['م', 'الاسم رباعي', 'الوظيفة', 'رقم الموبايل', 'البريد الإلكتروني', 'تأكيد الرغبة', 'تاريخ التسجيل', 'اسم الدورة'];
+        const rows = selected.map(function (r, idx) {
+          return [
+            idx + 1, r.fullName, r.jobTitle, r.phone, r.email,
+            r.confirmed ? 'نعم' : 'لا', r.registeredAt || '', r.courseTitle || ''
+          ].map(function (cell) {
+            return '"' + String(cell || '').replace(/"/g, '""') + '"';
+          }).join(',');
+        });
+        const csv = '\ufeff' + headers.join(',') + '\n' + rows.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'بيانات_المرشحين.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast('تم تصدير ملف البيانات (CSV) بنجاح', 'success');
+      }
+
+      function downloadSampleTemplate() {
+        const sample = [
+          '<div dir="rtl" style="font-family: Cairo, Arial, sans-serif; line-height: 1.9;">',
+          '  <div style="display:flex; justify-content:space-between; border-bottom:2px solid #0f3d5e; padding-bottom:10px; margin-bottom:20px;">',
+          '    <div><strong>اسم الجهة / الإدارة</strong><br/>إدارة التدريب والتطوير</div>',
+          '    <div style="text-align:left;">التاريخ: {{TODAY}}<br/>الموضوع: ترشيح لدورة تدريبية</div>',
+          '  </div>',
+          '  <h2 style="text-align:center; color:#0f3d5e;">خطاب ترشيح رسمي</h2>',
+          '  <p><strong>السيد مدير {{ORGANIZER}}</strong></p>',
+          '  <p>تحية طيبة وبعد،،،</p>',
+          '  <p>نتشرف بترشيح السادة الموضحة بياناتهم أدناه (وعددهم {{COUNT}}) لحضور الدورة التدريبية بعنوان <strong>{{COURSE_TITLE}}</strong> خلال الفترة <strong>{{COURSE_DATE}}</strong> في <strong>{{LOCATION}}</strong>:</p>',
+          '  {{TABLE}}',
+          '  <p>وتفضلوا بقبول فائق الاحترام والتقدير،،،</p>',
+          '  <div style="margin-top:40px; text-align:left; padding-left:40px;">',
+          '    <strong>مدير الإدارة</strong><br/><br/>التوقيع: ........................',
+          '  </div>',
+          '</div>'
+        ].join('\n');
+
+        const blob = new Blob([sample], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'نموذج_تيمبلت_جواب_ترشيح.html';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast('تم تحميل التيمبلت النموذجي، يمكنك تعديله وإعادة رفعه', 'info');
+      }
+
+      function copyText(text, successMsg) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            showToast(successMsg, 'success');
+          }).catch(function () {
+            fallbackCopy(text, successMsg);
+          });
+        } else {
+          fallbackCopy(text, successMsg);
+        }
+      }
+
+      function fallbackCopy(text, successMsg) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast(successMsg, 'success');
+        } catch (e) {
+          showToast('تعذر النسخ التلقائي، يمكنك النسخ يدوياً من الخانة', 'info');
+        }
+        ta.remove();
+      }
+
+      // ==================== ADMIN PIN FLOW ====================
+
+      function tryEnterAdmin() {
+        if (state.adminPinEnabled && !adminUnlocked) {
+          document.getElementById('input-pin-attempt').value = '';
+          document.getElementById('err-pin-attempt').classList.add('hidden');
+          document.getElementById('modal-pin').classList.remove('hidden');
+          return;
+        }
+        isLockedPublicLink = false;
+        state.viewMode = 'admin';
+        saveState();
+        renderAll();
+      }
+
+      document.getElementById('form-pin-unlock').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const attempt = document.getElementById('input-pin-attempt').value.trim();
+        if (attempt === String(state.adminPin || '1234')) {
+          adminUnlocked = true;
+          isLockedPublicLink = false;
+          state.viewMode = 'admin';
+          document.getElementById('modal-pin').classList.add('hidden');
+          saveState();
+          renderAll();
+          showToast('تم فتح لوحة تحكم الأدمن', 'success');
+        } else {
+          document.getElementById('err-pin-attempt').classList.remove('hidden');
+        }
+      });
+
+      document.getElementById('btn-cancel-pin').addEventListener('click', function () {
+        document.getElementById('modal-pin').classList.add('hidden');
+      });
+
+      // ==================== EVENT LISTENERS ====================
+
+      document.getElementById('btn-mode-public').addEventListener('click', function () {
+        state.viewMode = 'public';
+        document.getElementById('pub-success-state').classList.add('hidden');
+        saveState();
+        renderAll();
+      });
+
+      document.getElementById('btn-mode-admin').addEventListener('click', tryEnterAdmin);
+      document.getElementById('btn-unlock-admin-footer').addEventListener('click', tryEnterAdmin);
+
+      document.querySelectorAll('.admin-tab').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.activeTab = btn.getAttribute('data-tab');
+          saveState();
+          renderViewMode();
+          if (state.activeTab === 'tab-export') {
+            renderCourseSelectors();
+            renderLetterPreview();
+          }
+          if (state.activeTab === 'tab-sheets') renderSheetsTab();
+          if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+          }
+        });
+      });
+
+      // Course filters
+      document.getElementById('adm-course-filter').addEventListener('change', function (e) {
+        state.courseFilter = e.target.value;
+        saveState();
+        renderRegistrantsTable();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      });
+
+      document.getElementById('export-course-select').addEventListener('change', function (e) {
+        state.exportCourseTarget = e.target.value;
+        saveState();
+        renderLetterPreview();
+      });
+
+      // Quick Nomination Directory Modal
+      document.getElementById('btn-open-directory').addEventListener('click', function () {
+        document.getElementById('dir-search-input').value = '';
+        renderDirectoryModal();
+        document.getElementById('modal-directory').classList.remove('hidden');
+      });
+
+      function closeDirectoryModal() {
+        document.getElementById('modal-directory').classList.add('hidden');
+      }
+      document.getElementById('btn-close-directory').addEventListener('click', closeDirectoryModal);
+      document.getElementById('btn-done-directory').addEventListener('click', closeDirectoryModal);
+      document.getElementById('dir-search-input').addEventListener('input', renderDirectoryModal);
+
+      document.getElementById('directory-list').addEventListener('click', async function (e) {
+        const btn = e.target.closest('[data-quick-key]');
+        if (!btn) return;
+        const key = btn.getAttribute('data-quick-key');
+        const person = getUniqueDirectory().find(function (p) { return p.key === key; });
+        if (!person) return;
+        if (isPersonInCurrentCourse(person)) {
+          showToast('هذا الزميل مسجل بالفعل في الدورة الحالية', 'info');
+          return;
+        }
+        const newReg = {
+          id: 'reg_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          fullName: person.fullName,
+          jobTitle: person.jobTitle,
+          phone: person.phone,
+          email: person.email,
+          confirmed: true,
+          selectedForLetter: true,
+          registeredAt: getTodayArabic(),
+          courseTitle: getCurrentCourseTitle()
+        };
+        state.registrants.push(newReg);
+        saveState();
+        await pushToSheets({ action: 'add', data: newReg });
+        renderDirectoryModal();
+        renderAll();
+        showToast('تم ترشيح «' + person.fullName + '» للدورة الحالية بنجاح', 'success');
+      });
+
+      // Share links
+      document.getElementById('btn-copy-share-link').addEventListener('click', function () {
+        copyText(buildShareUrls().colleagues, 'تم نسخ رابط التسجيل للزملاء');
+      });
+      document.getElementById('btn-copy-colleagues-link').addEventListener('click', function () {
+        copyText(buildShareUrls().colleagues, 'تم نسخ رابط الزملاء (#register)');
+      });
+      document.getElementById('btn-copy-admin-link').addEventListener('click', function () {
+        copyText(buildShareUrls().admin, 'تم نسخ رابط لوحة الأدمن (#admin)');
+      });
+
+      // Google Sheets URL & PIN
+      document.getElementById('btn-save-sheets-url').addEventListener('click', async function () {
+        const url = document.getElementById('adm-sheets-url').value.trim();
+        if (url && !isValidSheetsUrl(url)) {
+          showToast('تأكد من أن الرابط يبدأ بـ https://script.google.com/macros/s/', 'error');
+          return;
+        }
+        state.sheetsApiUrl = url;
+        saveState();
+        renderSheetsTab();
+        renderViewMode();
+        if (url) {
+          await syncFromSheets(false);
+        } else {
+          showToast('تم إلغاء الربط والعودة للحفظ المحلي', 'info');
+        }
+      });
+
+      document.getElementById('btn-refresh-from-sheets').addEventListener('click', function () {
+        syncFromSheets(false);
+      });
+
+      document.getElementById('btn-save-pin').addEventListener('click', function () {
+        state.adminPinEnabled = document.getElementById('adm-pin-enabled').checked;
+        state.adminPin = document.getElementById('adm-pin-value').value.trim() || '1234';
+        adminUnlocked = true;
+        saveState();
+        showToast(state.adminPinEnabled ? 'تم تفعيل قفل لوحة الأدمن بنجاح' : 'تم إيقاف قفل لوحة الأدمن', 'success');
+      });
+
+      document.getElementById('btn-copy-gas-code').addEventListener('click', function () {
+        copyText(GAS_SCRIPT_SOURCE, 'تم نسخ كود Google Apps Script بنجاح');
+      });
+
+      document.getElementById('btn-download-gas-code').addEventListener('click', function () {
+        const blob = new Blob([GAS_SCRIPT_SOURCE], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Code.gs';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast('تم تحميل ملف Code.gs', 'success');
+      });
+
+      // Save Course & Announcement
+      document.getElementById('btn-save-course').addEventListener('click', async function () {
+        state.course.isOpen = document.getElementById('adm-course-open').checked;
+        state.course.title = document.getElementById('adm-course-title').value.trim();
+        state.course.organizer = document.getElementById('adm-course-organizer').value.trim();
+        state.course.dateRange = document.getElementById('adm-course-date').value.trim();
+        state.course.location = document.getElementById('adm-course-location').value.trim();
+        state.course.deadline = document.getElementById('adm-course-deadline').value;
+        state.course.adText = document.getElementById('adm-ad-text').value;
+        state.courseFilter = '__CURRENT__';
+        state.exportCourseTarget = '__CURRENT__';
+        saveState();
+        renderAll();
+        if (isValidSheetsUrl(state.sheetsApiUrl)) {
+          await pushToSheets({ action: 'saveCourse', data: state.course });
+          showToast('تم حفظ بيانات الدورة ومزامنتها مع Google Sheets', 'success');
+        } else {
+          showToast('تم حفظ بيانات الدورة والإعلان بنجاح', 'success');
+        }
+      });
+
+      document.getElementById('adm-course-open').addEventListener('change', function (e) {
+        state.course.isOpen = e.target.checked;
+        saveState();
+        renderKPIs();
+        renderPublicView();
+        pushToSheets({ action: 'saveCourse', data: state.course });
+      });
+
+      // Ad image upload
+      document.getElementById('adm-ad-image-input').addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          state.course.adImageDataUrl = ev.target.result;
+          saveState();
+          renderAdminCourseTab();
+          renderPublicView();
+          showToast('تم رفع صورة الإعلان بنجاح', 'success');
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-change-ad-img').addEventListener('click', function () {
+        document.getElementById('adm-ad-image-input').click();
+      });
+
+      document.getElementById('btn-remove-ad-img').addEventListener('click', function () {
+        state.course.adImageDataUrl = '';
+        saveState();
+        renderAdminCourseTab();
+        renderPublicView();
+        showToast('تمت إزالة صورة الإعلان', 'info');
+      });
+
+      // Lightbox
+      document.getElementById('pub-ad-image').addEventListener('click', function () {
+        if (!state.course.adImageDataUrl) return;
+        document.getElementById('lightbox-img').src = state.course.adImageDataUrl;
+        document.getElementById('modal-lightbox').classList.remove('hidden');
+      });
+      document.getElementById('btn-close-lightbox').addEventListener('click', function () {
+        document.getElementById('modal-lightbox').classList.add('hidden');
+      });
+      document.getElementById('modal-lightbox').addEventListener('click', function (e) {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
+      // Public Registration Form Submit
+      document.getElementById('public-registration-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const fullName = document.getElementById('reg-fullname').value.trim();
+        const jobTitle = document.getElementById('reg-job').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const confirmed = document.getElementById('reg-confirm').checked;
+
+        ['err-fullname', 'err-job', 'err-phone', 'err-email', 'err-confirm'].forEach(function (id) {
+          document.getElementById(id).classList.add('hidden');
+        });
+
+        let valid = true;
+        if (fullName.split(/\s+/).filter(Boolean).length < 4) {
+          const el = document.getElementById('err-fullname');
+          el.textContent = 'يرجى إدخال الاسم رباعي كاملاً (4 مقاطع على الأقل).';
+          el.classList.remove('hidden');
+          valid = false;
+        }
+        if (!jobTitle) {
+          const el = document.getElementById('err-job');
+          el.textContent = 'يرجى إدخال الوظيفة الحالية.';
+          el.classList.remove('hidden');
+          valid = false;
+        }
+        if (!/^[+\d][\d\s-]{8,16}$/.test(phone)) {
+          const el = document.getElementById('err-phone');
+          el.textContent = 'يرجى إدخال رقم موبايل صحيح.';
+          el.classList.remove('hidden');
+          valid = false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          const el = document.getElementById('err-email');
+          el.textContent = 'يرجى إدخال بريد إلكتروني صحيح.';
+          el.classList.remove('hidden');
+          valid = false;
+        }
+        if (!confirmed) {
+          const el = document.getElementById('err-confirm');
+          el.textContent = 'يجب التأشير على تأكيد الرغبة في الالتحاق بالدورة.';
+          el.classList.remove('hidden');
+          valid = false;
+        }
+        if (!valid) return;
+
+        const newReg = {
+          id: 'reg_' + Date.now(),
+          fullName: fullName,
+          jobTitle: jobTitle,
+          phone: phone,
+          email: email,
+          confirmed: true,
+          selectedForLetter: true,
+          registeredAt: getTodayArabic(),
+          courseTitle: getCurrentCourseTitle()
+        };
+
+        state.registrants.push(newReg);
+        saveState();
+        await pushToSheets({ action: 'add', data: newReg });
+
+        document.getElementById('public-registration-form').classList.add('hidden');
+        document.getElementById('pub-success-summary').innerHTML =
+          '<div><span class="text-slate-500">الاسم رباعي:</span> <strong>' + escapeHtml(newReg.fullName) + '</strong></div>' +
+          '<div><span class="text-slate-500">الوظيفة:</span> <strong>' + escapeHtml(newReg.jobTitle) + '</strong></div>' +
+          '<div><span class="text-slate-500">الموبايل:</span> <strong dir="ltr">' + escapeHtml(newReg.phone) + '</strong></div>' +
+          '<div><span class="text-slate-500">البريد الإلكتروني:</span> <strong dir="ltr">' + escapeHtml(newReg.email) + '</strong></div>';
+        document.getElementById('pub-success-state').classList.remove('hidden');
+        document.getElementById('public-registration-form').reset();
+
+        renderAll();
+        showToast('تم تسجيل بياناتك بنجاح', 'success');
+      });
+
+      document.getElementById('btn-register-another').addEventListener('click', function () {
+        document.getElementById('pub-success-state').classList.add('hidden');
+        document.getElementById('public-registration-form').classList.remove('hidden');
+      });
+
+      // Search & Select All
+      document.getElementById('adm-search-input').addEventListener('input', function () {
+        renderRegistrantsTable();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      });
+
+      document.getElementById('btn-select-all').addEventListener('click', function () {
+        const list = getFilteredRegistrants();
+        const allSelected = list.length > 0 && list.every(function (r) { return r.selectedForLetter; });
+        list.forEach(function (r) { r.selectedForLetter = !allSelected; });
+        saveState();
+        renderRegistrantsTable();
+        renderKPIs();
+        renderLetterPreview();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      });
+
+      // Table delegated actions
+      document.getElementById('registrants-tbody').addEventListener('click', function (e) {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.getAttribute('data-action');
+        const id = target.getAttribute('data-id');
+        const reg = state.registrants.find(function (r) { return r.id === id; });
+        if (!reg) return;
+
+        if (action === 'toggle-select') {
+          reg.selectedForLetter = target.checked;
+          saveState();
+          renderKPIs();
+          renderLetterPreview();
+          pushToSheets({ action: 'update', data: reg });
+        } else if (action === 'edit') {
+          openRegistrantModal(reg);
+        } else if (action === 'delete') {
+          pendingDeleteId = id;
+          document.getElementById('delete-confirm-text').textContent = 'هل أنت متأكد من حذف بيانات «' + reg.fullName + '» من قائمة المسجلين؟';
+          document.getElementById('modal-confirm-delete').classList.remove('hidden');
+        }
+      });
+
+      function openRegistrantModal(reg) {
+        const isEdit = Boolean(reg);
+        document.getElementById('modal-registrant-title').textContent = isEdit ? 'تعديل بيانات المتقدم' : 'إضافة متقدم جديد يدوياً';
+        document.getElementById('edit-reg-id').value = isEdit ? reg.id : '';
+        document.getElementById('edit-reg-fullname').value = isEdit ? reg.fullName : '';
+        document.getElementById('edit-reg-job').value = isEdit ? reg.jobTitle : '';
+        document.getElementById('edit-reg-phone').value = isEdit ? reg.phone : '';
+        document.getElementById('edit-reg-email').value = isEdit ? reg.email : '';
+        document.getElementById('edit-reg-course').value = isEdit ? (reg.courseTitle || getCurrentCourseTitle()) : getCurrentCourseTitle();
+        document.getElementById('edit-reg-confirmed').checked = isEdit ? Boolean(reg.confirmed) : true;
+        document.getElementById('edit-reg-selected').checked = isEdit ? Boolean(reg.selectedForLetter) : true;
+        document.getElementById('modal-registrant').classList.remove('hidden');
+      }
+
+      document.getElementById('btn-add-registrant').addEventListener('click', function () {
+        openRegistrantModal(null);
+      });
+
+      function closeRegistrantModal() {
+        document.getElementById('modal-registrant').classList.add('hidden');
+      }
+      document.getElementById('btn-close-reg-modal').addEventListener('click', closeRegistrantModal);
+      document.getElementById('btn-cancel-reg-modal').addEventListener('click', closeRegistrantModal);
+
+      document.getElementById('form-edit-registrant').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-reg-id').value;
+        const payload = {
+          fullName: document.getElementById('edit-reg-fullname').value.trim(),
+          jobTitle: document.getElementById('edit-reg-job').value.trim(),
+          phone: document.getElementById('edit-reg-phone').value.trim(),
+          email: document.getElementById('edit-reg-email').value.trim(),
+          courseTitle: document.getElementById('edit-reg-course').value.trim() || getCurrentCourseTitle(),
+          confirmed: document.getElementById('edit-reg-confirmed').checked,
+          selectedForLetter: document.getElementById('edit-reg-selected').checked
+        };
+        if (!payload.fullName || !payload.jobTitle) {
+          showToast('يرجى استكمال الاسم والوظيفة', 'error');
+          return;
+        }
+
+        if (id) {
+          const idx = state.registrants.findIndex(function (r) { return r.id === id; });
+          if (idx !== -1) {
+            state.registrants[idx] = Object.assign({}, state.registrants[idx], payload);
+            await pushToSheets({ action: 'update', data: state.registrants[idx] });
+          }
+          showToast('تم تحديث بيانات المتقدم بنجاح', 'success');
+        } else {
+          const item = Object.assign({ id: 'reg_' + Date.now(), registeredAt: getTodayArabic() }, payload);
+          state.registrants.push(item);
+          await pushToSheets({ action: 'add', data: item });
+          showToast('تمت إضافة المتقدم بنجاح', 'success');
+        }
+        saveState();
+        closeRegistrantModal();
+        renderAll();
+      });
+
+      // Confirm Delete Modal
+      document.getElementById('btn-cancel-delete').addEventListener('click', function () {
+        pendingDeleteId = null;
+        document.getElementById('modal-confirm-delete').classList.add('hidden');
+      });
+      document.getElementById('btn-confirm-delete').addEventListener('click', async function () {
+        if (pendingDeleteId) {
+          const delId = pendingDeleteId;
+          state.registrants = state.registrants.filter(function (r) { return r.id !== delId; });
+          pendingDeleteId = null;
+          saveState();
+          renderAll();
+          await pushToSheets({ action: 'delete', id: delId });
+          showToast('تم حذف المتقدم من القائمة', 'info');
+        }
+        document.getElementById('modal-confirm-delete').classList.add('hidden');
+      });
+
+      // Template Tab Actions
+      document.getElementById('btn-use-standard-tpl').addEventListener('click', function () {
+        state.template.mode = 'standard';
+        state.template.headerRight = document.getElementById('tpl-header-right').value;
+        state.template.headerLeft = document.getElementById('tpl-header-left').value;
+        state.template.recipientTitle = document.getElementById('tpl-recipient').value.trim();
+        state.template.greeting = document.getElementById('tpl-greeting').value.trim();
+        state.template.introParagraph = document.getElementById('tpl-intro').value;
+        state.template.closingParagraph = document.getElementById('tpl-closing').value;
+        state.template.signerTitle = document.getElementById('tpl-signer-title').value.trim();
+        state.template.signerName = document.getElementById('tpl-signer-name').value.trim();
+        saveState();
+        renderAll();
+        showToast('تم حفظ وتفعيل القالب الرسمي للجواب', 'success');
+      });
+
+      document.getElementById('tpl-letterhead-input').addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          state.template.letterheadImageDataUrl = ev.target.result;
+          saveState();
+          renderTemplateTab();
+          renderLetterPreview();
+          showToast('تم رفع صورة الترويسة الرسمية بنجاح', 'success');
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-remove-letterhead').addEventListener('click', function () {
+        state.template.letterheadImageDataUrl = '';
+        saveState();
+        renderTemplateTab();
+        renderLetterPreview();
+        showToast('تمت إزالة صورة الترويسة', 'info');
+      });
+
+      document.getElementById('custom-tpl-file-input').addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          state.template.customTemplateHtml = String(ev.target.result || '');
+          state.template.customTemplateName = file.name;
+          state.template.mode = 'custom';
+          saveState();
+          renderAll();
+          showToast('تم رفع وتفعيل التيمبلت المخصص بنجاح', 'success');
+        };
+        reader.readAsText(file, 'UTF-8');
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-clear-custom-tpl').addEventListener('click', function () {
+        state.template.mode = 'standard';
+        saveState();
+        renderAll();
+        showToast('تم الرجوع إلى القالب الرسمي', 'info');
+      });
+
+      document.getElementById('btn-download-sample-tpl').addEventListener('click', downloadSampleTemplate);
+
+      // Export & Print
+      document.getElementById('btn-export-word').addEventListener('click', exportWordDocument);
+      document.getElementById('btn-export-csv').addEventListener('click', exportCsvFile);
+      document.getElementById('btn-print-letter').addEventListener('click', function () {
+        renderLetterPreview();
+        window.print();
+      });
+
+      // JSON Backup
+      document.getElementById('btn-export-json').addEventListener('click', function () {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'نسخة_احتياطية_التدريب.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        showToast('تم تحميل النسخة الاحتياطية بنجاح', 'success');
+      });
+
+      document.getElementById('input-import-json').addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!parsed || typeof parsed !== 'object') throw new Error('Invalid');
+            state.course = Object.assign({}, defaultState.course, parsed.course || {});
+            state.registrants = Array.isArray(parsed.registrants) ? parsed.registrants : [];
+            state.template = Object.assign({}, defaultState.template, parsed.template || {});
+            saveState();
+            renderAll();
+            showToast('تمت استعادة البيانات بنجاح', 'success');
+          } catch (err) {
+            showToast('ملف النسخة الاحتياطية غير صالح', 'error');
+          }
+        };
+        reader.readAsText(file, 'UTF-8');
+        e.target.value = '';
+      });
+
+      // Initialize & auto-sync if linked
+      renderAll();
+      if (isValidSheetsUrl(state.sheetsApiUrl)) {
+        syncFromSheets(true);
+      }
+    })();
+  </script>
+</body>
+</html>
