@@ -22,33 +22,34 @@
       color: #0f172a;
     }
 
-    /* A4 Preview Sheet Styling */
     .a4-sheet {
       background: #ffffff;
       width: 100%;
       max-width: 210mm;
-      min-height: 270mm;
+      min-height: 285mm;
       margin: 0 auto;
-      padding: 18mm 16mm;
+      padding: 14mm 15mm;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
       border: 1px solid #e2e8f0;
       border-radius: 6px;
       color: #111827;
-      line-height: 1.85;
-      position: relative;
+      line-height: 1.8;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .a4-sheet table.nomination-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 16px 0 20px;
-      font-size: 13.5px;
+      margin: 14px 0 18px;
+      font-size: 13px;
     }
 
     .a4-sheet table.nomination-table th,
     .a4-sheet table.nomination-table td {
       border: 1px solid #334155;
-      padding: 8px 10px;
+      padding: 7px 9px;
       text-align: right;
       vertical-align: middle;
     }
@@ -75,7 +76,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 12mm;
+        margin: 10mm;
       }
       body {
         background: #ffffff !important;
@@ -95,7 +96,7 @@
         margin: 0 !important;
         padding: 4mm 6mm !important;
         max-width: 100% !important;
-        min-height: auto !important;
+        min-height: 270mm !important;
         width: 100% !important;
       }
     }
@@ -112,7 +113,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold leading-tight">بوابة الترشيح للدورات التدريبية</h1>
-          <p class="text-xs text-slate-300 hidden sm:block">تجميع بيانات المتقدمين، أرشيف الدورات والزملاء، وإصدار خطابات الترشيح</p>
+          <p class="text-xs text-slate-300 hidden sm:block">تسجيل الراغبين في الدورات التدريبية وإصدار خطابات الترشيح الرسمية</p>
         </div>
       </div>
 
@@ -122,15 +123,19 @@
           <span id="sync-label">حفظ محلي</span>
         </span>
         <div class="bg-slate-800 p-1 rounded-xl flex items-center border border-slate-700">
-          <button id="btn-mode-public" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+          <button id="btn-mode-public" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
             <span>واجهة التسجيل</span>
           </button>
-          <button id="btn-mode-admin" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow">
-            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <button id="btn-mode-admin" type="button" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white">
+            <i data-lucide="lock" class="w-4 h-4"></i>
             <span>لوحة الأدمن</span>
           </button>
         </div>
+        <button id="btn-admin-logout" type="button" class="hidden px-2.5 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1" title="قفل لوحة الأدمن وتسجيل الخروج">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">خروج</span>
+        </button>
       </div>
     </div>
   </header>
@@ -139,8 +144,7 @@
   <main class="no-print flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <!-- ==================== PUBLIC REGISTRATION VIEW ==================== -->
-    <section id="view-public" class="hidden max-w-3xl mx-auto space-y-6">
-      <!-- Course Banner Card -->
+    <section id="view-public" class="max-w-3xl mx-auto space-y-6">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-gradient-to-l from-slate-900 via-sky-950 to-teal-900 text-white p-6 sm:p-8">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -167,7 +171,7 @@
           </div>
         </div>
 
-        <!-- Announcement Section (Image and/or Text) -->
+        <!-- Announcement Section -->
         <div id="pub-ad-section" class="p-6 border-b border-slate-100 space-y-4">
           <div class="flex items-center gap-2 text-slate-800 font-bold text-sm">
             <i data-lucide="megaphone" class="w-4 h-4 text-teal-600"></i>
@@ -230,7 +234,6 @@
             </div>
           </div>
 
-          <!-- Confirmation Checkbox -->
           <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-4">
             <label class="flex items-start gap-3 cursor-pointer">
               <input id="reg-confirm" type="checkbox" class="mt-1 w-4 h-4 rounded border-teal-400 text-teal-600 focus:ring-teal-500 shrink-0" />
@@ -263,17 +266,17 @@
         </div>
       </div>
 
-      <!-- Discreet Admin Unlock Button when opened in colleague-only link (#register) -->
-      <div id="pub-admin-footer" class="hidden text-center pt-2">
-        <button id="btn-unlock-admin-footer" type="button" class="text-xs text-slate-400 hover:text-slate-600 inline-flex items-center gap-1 transition">
-          <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-          <span>دخول الأدمن</span>
+      <!-- Discreet Admin Unlock Button -->
+      <div id="pub-admin-footer" class="text-center pt-1">
+        <button id="btn-unlock-admin-footer" type="button" class="text-xs text-slate-400 hover:text-slate-700 inline-flex items-center gap-1 transition">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>دخول مسؤول التدريب (الأدمن)</span>
         </button>
       </div>
     </section>
 
     <!-- ==================== ADMIN DASHBOARD VIEW ==================== -->
-    <section id="view-admin" class="space-y-6">
+    <section id="view-admin" class="hidden space-y-6">
 
       <!-- KPI Summary Bar -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -399,7 +402,7 @@
           </div>
         </div>
 
-        <!-- Announcement Upload (Text or Image or Both) -->
+        <!-- Announcement Upload -->
         <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
           <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
             <i data-lucide="megaphone" class="w-5 h-5 text-teal-600"></i>
@@ -491,76 +494,95 @@
         </div>
       </div>
 
-      <!-- TAB 3: Letter Template Customization & Upload -->
+      <!-- TAB 3: Official Letter Template Customization (Synced to Google Sheets) -->
       <div id="tab-template" class="admin-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Standard Template Editor -->
         <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
               <i data-lucide="file-edit" class="w-5 h-5 text-teal-600"></i>
-              <span>تخصيص القالب الرسمي لجواب الترشيح</span>
+              <span>قالب الخطاب الرسمي (محفوظ في Google Sheets)</span>
             </h3>
             <span id="tpl-active-pill" class="px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800">مُفعّل حالياً</span>
           </div>
 
-          <!-- Letterhead Image Upload -->
+          <!-- Center Logo Upload -->
           <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <label class="text-xs font-bold text-slate-800">صورة الترويسة الرسمية / الأكليشيه (Letterhead) أعلى الجواب</label>
+              <label class="text-xs font-bold text-slate-800">الشعار الرسمي في منتصف الترويسة (اللوجو)</label>
               <div class="flex items-center gap-2">
                 <label class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition flex items-center gap-1.5">
                   <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                  <span>رفع صورة ترويسة</span>
+                  <span>تغيير اللوجو</span>
                   <input id="tpl-letterhead-input" type="file" accept="image/*" class="hidden" />
                 </label>
                 <button id="btn-remove-letterhead" type="button" class="hidden px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold">إزالة</button>
               </div>
             </div>
-            <div id="tpl-letterhead-preview-wrap" class="hidden pt-2">
-              <img id="tpl-letterhead-preview" src="" alt="ترويسة الجواب" class="max-h-24 mx-auto rounded border border-slate-200 bg-white p-1" />
+            <div id="tpl-letterhead-preview-wrap" class="hidden pt-1">
+              <img id="tpl-letterhead-preview" src="" alt="الشعار الرسمي" class="h-16 mx-auto rounded border border-slate-200 bg-white p-1 object-contain" />
             </div>
-            <p class="text-[11px] text-slate-500">عند رفع ترويسة مصورة ستظهر في رأس الخطاب تلقائياً في الطباعة وملف Word.</p>
+            <p class="text-[11px] text-slate-500">يظهر الشعار في منتصف الترويسة بين البيانات العربية (يمين) والإنجليزية (يسار) ويُحفظ مع القالب في Google Sheets.</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label for="tpl-header-right" class="block text-xs font-bold text-slate-700 mb-1">بيانات الجهة (أعلى اليمين)</label>
+              <label for="tpl-header-right" class="block text-xs font-bold text-slate-700 mb-1">الترويسة العربية (أعلى اليمين)</label>
               <textarea id="tpl-header-right" rows="3" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs leading-relaxed focus:border-teal-600 outline-none"></textarea>
             </div>
             <div>
-              <label for="tpl-header-left" class="block text-xs font-bold text-slate-700 mb-1">التاريخ ورقم الإشارة (أعلى اليسار)</label>
-              <textarea id="tpl-header-left" rows="3" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs leading-relaxed focus:border-teal-600 outline-none"></textarea>
+              <label for="tpl-header-left" class="block text-xs font-bold text-slate-700 mb-1">الترويسة الإنجليزية (أعلى اليسار)</label>
+              <textarea id="tpl-header-left" rows="3" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-left leading-relaxed focus:border-teal-600 outline-none"></textarea>
             </div>
-            <div class="sm:col-span-2">
-              <label for="tpl-recipient" class="block text-xs font-bold text-slate-700 mb-1">الجهة المرسل إليها الخطاب</label>
+            <div>
+              <label for="tpl-recipient" class="block text-xs font-bold text-slate-700 mb-1">المرسل إليه (السطر الأول - يمين)</label>
               <input id="tpl-recipient" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
             </div>
+            <div>
+              <label for="tpl-recipient-line2" class="block text-xs font-bold text-slate-700 mb-1">صفة المرسل إليه (السطر الثاني)</label>
+              <input id="tpl-recipient-line2" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
             <div class="sm:col-span-2">
-              <label for="tpl-greeting" class="block text-xs font-bold text-slate-700 mb-1">التحية الافتتاحية</label>
+              <label for="tpl-greeting" class="block text-xs font-bold text-slate-700 mb-1">التحية الافتتاحية (في المنتصف)</label>
               <input id="tpl-greeting" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
             </div>
             <div class="sm:col-span-2">
-              <label for="tpl-intro" class="block text-xs font-bold text-slate-700 mb-1">ديباجة ومقدمة الجواب (يدعم المتغيرات مثل {{COURSE_TITLE}} و {{COURSE_DATE}})</label>
+              <label for="tpl-intro" class="block text-xs font-bold text-slate-700 mb-1">مقدمة الخطاب (يدعم المتغيرات {{COURSE_TITLE}} و {{COURSE_DATE}} و {{LOCATION}} و {{COUNT}})</label>
               <textarea id="tpl-intro" rows="3" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm leading-relaxed focus:border-teal-600 outline-none"></textarea>
             </div>
             <div class="sm:col-span-2">
-              <label for="tpl-closing" class="block text-xs font-bold text-slate-700 mb-1">خاتمة الجواب</label>
+              <label for="tpl-closing" class="block text-xs font-bold text-slate-700 mb-1">خاتمة الخطاب</label>
               <textarea id="tpl-closing" rows="2" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm leading-relaxed focus:border-teal-600 outline-none"></textarea>
             </div>
             <div>
-              <label for="tpl-signer-title" class="block text-xs font-bold text-slate-700 mb-1">صفة المُوقّع</label>
+              <label for="tpl-signer-title" class="block text-xs font-bold text-slate-700 mb-1">صفة المُوقّع (السطر الأول)</label>
               <input id="tpl-signer-title" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div>
+              <label for="tpl-signer-title2" class="block text-xs font-bold text-slate-700 mb-1">صفة إضافية للمُوقّع (السطر الثاني)</label>
+              <input id="tpl-signer-title2" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div>
+              <label for="tpl-signer-prefix" class="block text-xs font-bold text-slate-700 mb-1">اللقب قبل الاسم (مهندس/ أو مهندسة/)</label>
+              <input id="tpl-signer-prefix" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
             </div>
             <div>
               <label for="tpl-signer-name" class="block text-xs font-bold text-slate-700 mb-1">اسم المُوقّع</label>
               <input id="tpl-signer-name" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
             </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-footer-line1" class="block text-xs font-bold text-slate-700 mb-1">تذييل الصفحة — العنوان والمكان (أسفل الخطاب)</label>
+              <input id="tpl-footer-line1" type="text" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:border-teal-600 outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="tpl-footer-line2" class="block text-xs font-bold text-slate-700 mb-1">تذييل الصفحة — البريد الإلكتروني أو التواصل</label>
+              <input id="tpl-footer-line2" type="text" dir="ltr" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-left focus:border-teal-600 outline-none" />
+            </div>
           </div>
 
           <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-slate-100">
-            <button id="btn-use-standard-tpl" type="button" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
-              <i data-lucide="check" class="w-4 h-4"></i>
-              <span>حفظ وتفعيل القالب الرسمي</span>
+            <button id="btn-use-standard-tpl" type="button" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition flex items-center gap-1.5">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>حفظ ومزامنة القالب في Google Sheets</span>
             </button>
           </div>
         </div>
@@ -570,13 +592,13 @@
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
               <i data-lucide="file-up" class="w-5 h-5 text-sky-600"></i>
-              <span>رفع تيمبلت خاص بالجواب</span>
+              <span>رفع تيمبلت خاص بالجواب (اختياري)</span>
             </h3>
             <span id="custom-tpl-active-pill" class="hidden px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800">مُفعّل حالياً</span>
           </div>
 
           <p class="text-xs text-slate-600 leading-relaxed">
-            يمكنك رفع ملف تيمبلت جاهز بصيغة <strong class="text-slate-900">HTML</strong> أو <strong class="text-slate-900">TXT</strong> يحتوي على شكل الجواب المعتمد لديكم، وسيقوم النظام تلقائياً بتعبئة بيانات الدورة وجدول المتقدمين مكان المتغيرات.
+            القالب الرسمي المدمج يطابق نموذج خطابات القطاع (ترويسة عربية + لوجو وسط + إنجليزية + توقيع + تذييل المكان). ويمكنك أيضاً رفع ملف <strong class="text-slate-900">HTML</strong> أو <strong class="text-slate-900">TXT</strong> مخصص بالكامل.
           </p>
 
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
@@ -639,21 +661,20 @@
           </div>
         </div>
 
-        <!-- Live A4 Preview -->
         <div class="overflow-x-auto pb-4">
           <div id="letter-preview-container" class="a4-sheet"></div>
         </div>
       </div>
 
-      <!-- TAB 5: Google Sheets Sync, Links & Admin PIN -->
+      <!-- TAB 5: Google Sheets Sync, Links & Admin Security -->
       <div id="tab-sheets" class="admin-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div class="border-b border-slate-100 pb-3">
             <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <i data-lucide="database" class="w-5 h-5 text-emerald-600"></i>
-              <span>ربط قاعدة بيانات Google Sheets والروابط المباشرة</span>
+              <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+              <span>الربط الآمن مع Google Sheets والروابط المباشرة</span>
             </h3>
-            <p class="text-xs text-slate-500 mt-1">الصق رابط Web App الناتج من Google Apps Script ليتم تسجيل وأرشفة جميع الدورات والزملاء مباشرة في الشيت.</p>
+            <p class="text-xs text-slate-500 mt-1">يحفظ النظام الآن بيانات الدورة والمسجلين **وقالب الخطاب الرسمي** داخل Google Sheets، مع حماية كاملة برمز الأدمن.</p>
           </div>
 
           <div class="space-y-3">
@@ -667,11 +688,10 @@
             </div>
           </div>
 
-          <!-- Ready Links Box -->
           <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
             <h4 class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
               <i data-lucide="share-2" class="w-4 h-4 text-teal-600"></i>
-              <span>الروابط الجاهزة بعد رفع التطبيق (تخفي لوحة الأدمن تلقائياً عن الزملاء)</span>
+              <span>الروابط الجاهزة بعد رفع التطبيق على GitHub</span>
             </h4>
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1">1. رابط الزملاء (يفتح على إعلان الدورة واستمارة التسجيل فقط):</label>
@@ -681,7 +701,7 @@
               </div>
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">2. رابط لوحة الأدمن (لإدارة الدورة وطباعة الخطابات):</label>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">2. رابط لوحة الأدمن (يطلب رمز الدخول قبل عرض أي بيانات):</label>
               <div class="flex gap-2">
                 <input id="link-admin-preview" type="text" readonly dir="ltr" class="flex-1 bg-white rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 font-mono" />
                 <button id="btn-copy-admin-link" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shrink-0">نسخ</button>
@@ -689,31 +709,30 @@
             </div>
           </div>
 
-          <!-- Admin PIN Security -->
-          <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-200 space-y-3">
+          <div class="bg-amber-50/70 rounded-xl p-4 border border-amber-200 space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <i data-lucide="shield" class="w-4 h-4 text-amber-700"></i>
-                <span class="text-xs font-extrabold text-slate-800">حماية لوحة الأدمن برقم سري (PIN)</span>
+                <i data-lucide="key-round" class="w-4 h-4 text-amber-700"></i>
+                <span class="text-xs font-extrabold text-slate-800">رمز دخول الأدمن (مُفعّل افتراضياً)</span>
               </div>
-              <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
-                <input id="adm-pin-enabled" type="checkbox" class="w-4 h-4 rounded text-amber-600" />
-                <span>تفعيل القفل</span>
-              </label>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">حماية نشطة</span>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <input id="adm-pin-value" type="text" dir="ltr" maxlength="12" placeholder="الرقم السري (مثلاً 1234)" class="w-44 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs text-center font-mono font-bold outline-none" />
-              <button id="btn-save-pin" type="button" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition">حفظ إعداد القفل</button>
+            <p class="text-[11px] text-slate-600 leading-relaxed">
+              في الوضع المحلي، الرمز الافتراضي هو <code>2026</code>. وعند الربط بـ Google Sheets يتم التحقق من المتغير <code>ADMIN_SECRET</code> داخل <code>Code.gs</code> على خادم Google.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <input id="adm-pin-value" type="text" dir="ltr" maxlength="20" placeholder="الرمز السري المحلي (2026)" class="w-48 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs text-center font-mono font-bold outline-none" />
+              <button id="btn-save-pin" type="button" class="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition">تحديث الرمز المحلي</button>
             </div>
           </div>
         </div>
 
-        <!-- Apps Script Code Box -->
+        <!-- Secure Apps Script Code Box -->
         <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
               <i data-lucide="code-2" class="w-5 h-5 text-sky-600"></i>
-              <span>كود Google Apps Script المحدث (9 أعمدة)</span>
+              <span>كود Apps Script المحمي (يدعم قالب الجواب)</span>
             </h3>
             <button id="btn-copy-gas-code" type="button" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -721,12 +740,12 @@
             </button>
           </div>
           <p class="text-xs text-slate-600 leading-relaxed">
-            افتح ملف Google Sheet الخاص بك ← اختر <strong>Extensions</strong> ← <strong>Apps Script</strong> ← الصق هذا الكود في <code>Code.gs</code> ثم اضغط <strong>Deploy ← New deployment ← Web app</strong> (اجعل الوصول <strong>Anyone</strong>) وانسخ الرابط هنا.
+            الصق هذا الكود المحدث في <code>Code.gs</code> (يدعم ورقة <code>LetterTemplate</code> لحفظ القالب)، وغيّر <strong><code>ADMIN_SECRET</code></strong> إلى رمزك السري قبل إعادة النشر.
           </p>
           <pre id="gas-code-preview" dir="ltr" class="bg-slate-900 text-emerald-300 rounded-xl p-3.5 text-[11px] font-mono overflow-x-auto max-h-72 leading-relaxed"></pre>
           <button id="btn-download-gas-code" type="button" class="w-full px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5">
             <i data-lucide="download" class="w-4 h-4"></i>
-            <span>تحميل ملف Code.gs</span>
+            <span>تحميل ملف Code.gs المحمي</span>
           </button>
         </div>
       </div>
@@ -769,18 +788,21 @@
   </div>
 
   <!-- Admin PIN Modal -->
-  <div id="modal-pin" class="no-print hidden fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full p-6 space-y-4 border border-slate-200 text-center">
+  <div id="modal-pin" class="no-print hidden fixed inset-0 z-50 bg-slate-900/75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4 border border-slate-200 text-center">
       <div class="w-12 h-12 mx-auto rounded-full bg-slate-900 text-teal-400 flex items-center justify-center">
         <i data-lucide="key-round" class="w-6 h-6"></i>
       </div>
-      <h3 class="text-base font-extrabold text-slate-900">دخول لوحة تحكم الأدمن</h3>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900">دخول لوحة تحكم الأدمن</h3>
+        <p id="pin-modal-hint" class="text-xs text-slate-500 mt-1">أدخل رمز الدخول السري للتحكم في الدورة والمزامنة</p>
+      </div>
       <form id="form-pin-unlock" class="space-y-3">
-        <input id="input-pin-attempt" type="password" dir="ltr" placeholder="أدخل الرقم السري" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-center font-mono text-sm focus:border-teal-600 outline-none" />
-        <p id="err-pin-attempt" class="hidden text-xs text-rose-600 font-bold">الرقم السري غير صحيح</p>
-        <div class="flex gap-2">
-          <button id="btn-cancel-pin" type="button" class="flex-1 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold">إلغاء</button>
-          <button type="submit" class="flex-1 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold">دخول</button>
+        <input id="input-pin-attempt" type="password" dir="ltr" required placeholder="أدخل رمز الأدمن السري" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-center font-mono text-sm focus:border-teal-600 focus:ring-2 focus:ring-teal-500/20 outline-none" />
+        <p id="err-pin-attempt" class="hidden text-xs text-rose-600 font-bold">رمز الدخول غير صحيح، يرجى المحاولة مرة أخرى</p>
+        <div class="flex gap-2 pt-1">
+          <button id="btn-cancel-pin" type="button" class="flex-1 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold">إلغاء</button>
+          <button id="btn-submit-pin" type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition">تحقق ودخول</button>
         </div>
       </form>
     </div>
@@ -865,34 +887,55 @@
 
   <script>
     (function () {
-      const STORAGE_KEY = 'training_nomination_portal_v3';
+      const STORAGE_KEY = 'training_nomination_portal_v5';
+      const DEFAULT_LOGO_DATA_URI = 'data:image/png;base64,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';
 
       const GAS_SCRIPT_SOURCE = [
+        '// غيّر هذا الرمز السري إلى كلمة مرور خاصة بك قبل النشر (Deploy)',
+        'const ADMIN_SECRET = "2026";',
+        '',
         'function doGet(e) {',
         '  const ss = SpreadsheetApp.getActiveSpreadsheet();',
         '  const regSheet = ss.getSheetByName("Registrants") || ss.insertSheet("Registrants");',
         '  const cfgSheet = ss.getSheetByName("CourseSettings") || ss.insertSheet("CourseSettings");',
-        '  const regRows = regSheet.getDataRange().getValues().slice(1);',
-        '  const registrants = regRows.filter(function(r){ return r[0]; }).map(function(r){',
-        '    return {',
-        '      id: String(r[0]),',
-        '      fullName: String(r[1] || ""),',
-        '      jobTitle: String(r[2] || ""),',
-        '      phone: String(r[3] || ""),',
-        '      email: String(r[4] || ""),',
-        '      confirmed: r[5] === "نعم" || r[5] === true,',
-        '      selectedForLetter: r[6] === "نعم" || r[6] === true,',
-        '      registeredAt: String(r[7] || ""),',
-        '      courseTitle: String(r[8] || "")',
-        '    };',
-        '  });',
+        '  const tplSheet = ss.getSheetByName("LetterTemplate") || ss.insertSheet("LetterTemplate");',
+        '  const params = (e && e.parameter) ? e.parameter : {};',
+        '',
         '  const cfgRows = cfgSheet.getDataRange().getValues().slice(1);',
         '  const course = {};',
         '  cfgRows.forEach(function(r){ if (r[0]) course[String(r[0])] = r[1]; });',
         '  if (typeof course.isOpen !== "undefined") {',
         '    course.isOpen = String(course.isOpen).toLowerCase() === "true";',
         '  }',
-        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok", registrants: registrants, course: course }))',
+        '',
+        '  // لا تُعرض بيانات المسجلين ولا قالب الجواب إلا للأدمن برمز الدخول الصحيح',
+        '  if (params.action === "adminGet") {',
+        '    if (String(params.pin || "") !== ADMIN_SECRET) {',
+        '      return ContentService.createTextOutput(JSON.stringify({ status: "unauthorized" }))',
+        '        .setMimeType(ContentService.MimeType.JSON);',
+        '    }',
+        '    const regRows = regSheet.getDataRange().getValues().slice(1);',
+        '    const registrants = regRows.filter(function(r){ return r[0]; }).map(function(r){',
+        '      return {',
+        '        id: String(r[0]),',
+        '        fullName: String(r[1] || ""),',
+        '        jobTitle: String(r[2] || ""),',
+        '        phone: String(r[3] || ""),',
+        '        email: String(r[4] || ""),',
+        '        confirmed: r[5] === "نعم" || r[5] === true,',
+        '        selectedForLetter: r[6] === "نعم" || r[6] === true,',
+        '        registeredAt: String(r[7] || ""),',
+        '        courseTitle: String(r[8] || "")',
+        '      };',
+        '    });',
+        '    const tplRows = tplSheet.getDataRange().getValues().slice(1);',
+        '    const template = {};',
+        '    tplRows.forEach(function(r){ if (r[0]) template[String(r[0])] = String(r[1] || ""); });',
+        '    return ContentService.createTextOutput(JSON.stringify({ status: "ok", registrants: registrants, course: course, template: template }))',
+        '      .setMimeType(ContentService.MimeType.JSON);',
+        '  }',
+        '',
+        '  return ContentService.createTextOutput(JSON.stringify({ status: "ok", course: course }))',
         '    .setMimeType(ContentService.MimeType.JSON);',
         '}',
         '',
@@ -900,12 +943,22 @@
         '  const ss = SpreadsheetApp.getActiveSpreadsheet();',
         '  const regSheet = ss.getSheetByName("Registrants") || ss.insertSheet("Registrants");',
         '  const cfgSheet = ss.getSheetByName("CourseSettings") || ss.insertSheet("CourseSettings");',
-        '  const body = JSON.parse(e.postData.contents || "{}");',
+        '  const tplSheet = ss.getSheetByName("LetterTemplate") || ss.insertSheet("LetterTemplate");',
+        '  const body = JSON.parse((e && e.postData && e.postData.contents) ? e.postData.contents : "{}");',
         '  const action = body.action || "add";',
+        '',
         '  if (action === "add") {',
-        '    const p = body.data;',
+        '    const p = body.data || {};',
         '    regSheet.appendRow([p.id, p.fullName, p.jobTitle, "\'" + p.phone, p.email, p.confirmed ? "نعم" : "لا", p.selectedForLetter ? "نعم" : "لا", p.registeredAt, p.courseTitle || ""]);',
-        '  } else if (action === "update") {',
+        '    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);',
+        '  }',
+        '',
+        '  if (String(body.pin || "") !== ADMIN_SECRET) {',
+        '    return ContentService.createTextOutput(JSON.stringify({ status: "unauthorized" }))',
+        '      .setMimeType(ContentService.MimeType.JSON);',
+        '  }',
+        '',
+        '  if (action === "update") {',
         '    const p = body.data;',
         '    const vals = regSheet.getDataRange().getValues();',
         '    for (var i = 1; i < vals.length; i++) {',
@@ -927,6 +980,14 @@
         '    cfgSheet.clearContents();',
         '    cfgSheet.appendRow(["Key", "Value"]);',
         '    Object.keys(c).forEach(function(k){ cfgSheet.appendRow([k, String(c[k] || "")]); });',
+        '  } else if (action === "saveTemplate") {',
+        '    const t = body.data || {};',
+        '    tplSheet.clearContents();',
+        '    tplSheet.appendRow(["Key", "Value"]);',
+        '    Object.keys(t).forEach(function(k){',
+        '      const val = String(t[k] || "");',
+        '      if (val.length <= 48000) tplSheet.appendRow([k, val]);',
+        '    });',
         '  }',
         '  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))',
         '    .setMimeType(ContentService.MimeType.JSON);',
@@ -937,11 +998,10 @@
       const ARCHIVE_SAMPLE_COURSE = 'تحليل البيانات وإعداد التقارير التفاعلية باستخدام Power BI';
 
       const defaultState = {
-        viewMode: 'admin',
+        viewMode: 'public',
         activeTab: 'tab-course',
         sheetsApiUrl: '',
-        adminPinEnabled: false,
-        adminPin: '1234',
+        adminPin: '2026',
         courseFilter: '__CURRENT__',
         exportCourseTarget: '__CURRENT__',
         course: {
@@ -1013,15 +1073,20 @@
         ],
         template: {
           mode: 'standard',
-          letterheadImageDataUrl: '',
-          headerRight: 'جمهورية مصر العربية\nوزارة الموارد المائية والري\nالإدارة المركزية للتدريب والتطوير',
-          headerLeft: 'التاريخ: {{TODAY}}\nرقم الإشارة: ترشيح / 2026',
-          recipientTitle: 'السيد الأستاذ الدكتور / مدير مركز التدريب الإقليمي للموارد المائية والري',
-          greeting: 'تحية طيبة وبعد،،،',
-          introParagraph: 'إيماءً إلى الإعلان الوارد بشأن إقامة الدورة التدريبية بعنوان «{{COURSE_TITLE}}» والمزمع عقدها خلال الفترة ({{COURSE_DATE}}) في ({{LOCATION}})، نتشرف بترشيح السادة الموضحة بياناتهم أدناه (وعددهم {{COUNT}}) لحضور الدورة التدريبية المشار إليها، وذلك بناءً على رغبتهم الأكيدة في الالتحاق:',
-          closingParagraph: 'برجاء التفضل بالنظر والموافقة على تسجيل السادة المرشحين واتخاذ ما يلزم نحو إلحاقهم بالدورة التدريبية.\nوتفضلوا بقبول فائق الاحترام والتقدير،،،',
-          signerTitle: 'مدير عام الإدارة',
-          signerName: 'م / ...............................',
+          logoDataUrl: DEFAULT_LOGO_DATA_URI,
+          headerRight: 'وزارة الموارد المائية والري\nمصلحة الري\nقطاع التوسع الأفقي والمشروعات',
+          headerLeft: 'Ministry Of Water Resources & Irrigation\nIrrigation Department\nHorizontal Expansion & Projects Sector',
+          recipientLine1: 'السيد المهندس / .......................................',
+          recipientLine2: 'رئيس مصلحة الري',
+          greeting: 'تحية طيبة وبعد ،،،',
+          introParagraph: 'بالإشارة إلى الإعلان الوارد بشأن إقامة الدورة التدريبية بعنوان «{{COURSE_TITLE}}» والمزمع عقدها خلال الفترة ({{COURSE_DATE}}) في ({{LOCATION}})، أتشرف بإحاطة سيادتكم بترشيح السادة الموضحة بياناتهم أدناه (وعددهم {{COUNT}}) لحضور الدورة التدريبية المشار إليها، وذلك بناءً على رغبتهم الأكيدة في الالتحاق:',
+          closingParagraph: 'وبناءً عليه، برجاء التفضل بالنظر والموافقة على تسجيل السادة المرشحين واتخاذ ما يلزم نحو إلحاقهم بالدورة التدريبية.\nوتفضلوا بقبول فائق الاحترام والتقدير ،،،',
+          signerTitle1: 'رئيس قطاع التوسع الأفقي والمشروعات',
+          signerTitle2: 'والمشرف على قطاع تطوير الري',
+          signerPrefix: 'مهندسة/',
+          signerName: '"......................................."',
+          footerLine1: 'الحي الحكومي بالعاصمة الإدارية - وزارة الموارد المائية والري - مبنى مصلحة الري - الدور الخامس',
+          footerLine2: 'E-mail: he.irrigation@mwri.gov.eg',
           customTemplateHtml: '',
           customTemplateName: ''
         }
@@ -1029,8 +1094,11 @@
 
       let state = loadState();
       let pendingDeleteId = null;
+      let sessionAdminPin = '';
       let adminUnlocked = false;
       let isLockedPublicLink = false;
+
+      state.viewMode = 'public';
 
       (function parseUrlParams() {
         try {
@@ -1042,11 +1110,7 @@
           }
         } catch (e) {}
         if (window.location.hash === '#register') {
-          state.viewMode = 'public';
           isLockedPublicLink = true;
-        } else if (window.location.hash === '#admin') {
-          state.viewMode = 'admin';
-          isLockedPublicLink = false;
         }
       })();
 
@@ -1059,17 +1123,20 @@
           const regs = (Array.isArray(parsed.registrants) ? parsed.registrants : defaultState.registrants.slice()).map(function (r) {
             return Object.assign({ courseTitle: course.title }, r);
           });
+          const tpl = Object.assign({}, defaultState.template, parsed.template || {});
+          if (!tpl.logoDataUrl && parsed.template && parsed.template.logoDataUrl !== '') {
+            tpl.logoDataUrl = DEFAULT_LOGO_DATA_URI;
+          }
           return {
-            viewMode: parsed.viewMode || 'admin',
+            viewMode: 'public',
             activeTab: parsed.activeTab || 'tab-course',
-            sheetsApiUrl: parsed.sheetsApiUrl || '',
-            adminPinEnabled: Boolean(parsed.adminPinEnabled),
-            adminPin: parsed.adminPin || '1234',
+            sheetsApiUrl: parsed.sheetsApiUrl || defaultState.sheetsApiUrl || '',
+            adminPin: parsed.adminPin || '2026',
             courseFilter: parsed.courseFilter || '__CURRENT__',
             exportCourseTarget: parsed.exportCourseTarget || '__CURRENT__',
             course: course,
             registrants: regs,
-            template: Object.assign({}, defaultState.template, parsed.template || {})
+            template: tpl
           };
         } catch (e) {
           return JSON.parse(JSON.stringify(defaultState));
@@ -1148,7 +1215,6 @@
               courses: new Set()
             });
           } else {
-            // Keep latest details
             const existing = map.get(key);
             existing.fullName = r.fullName || existing.fullName;
             existing.jobTitle = r.jobTitle || existing.jobTitle;
@@ -1187,21 +1253,42 @@
         });
       }
 
-      // ==================== GOOGLE SHEETS SYNC ====================
+      // ==================== SECURE GOOGLE SHEETS SYNC ====================
 
       function isValidSheetsUrl(url) {
         return typeof url === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/.+/.test(url.trim());
       }
 
-      async function syncFromSheets(silent) {
-        if (!isValidSheetsUrl(state.sheetsApiUrl)) {
-          if (!silent) showToast('يرجى إدخال رابط Google Apps Script أولاً', 'info');
-          return false;
-        }
+      async function syncPublicCourseFromSheets() {
+        if (!isValidSheetsUrl(state.sheetsApiUrl)) return false;
         try {
           const res = await fetch(state.sheetsApiUrl.trim(), { method: 'GET' });
+          if (!res.ok) return false;
+          const json = await res.json();
+          if (json && json.status === 'ok' && json.course && Object.keys(json.course).length > 0) {
+            state.course = Object.assign({}, state.course, json.course);
+            saveState();
+            renderPublicView();
+            return true;
+          }
+        } catch (err) {}
+        return false;
+      }
+
+      async function syncAdminFromSheets(pin, silent) {
+        if (!isValidSheetsUrl(state.sheetsApiUrl)) {
+          if (!silent) showToast('يرجى إدخال رابط Google Apps Script أولاً', 'info');
+          return { ok: false, reason: 'no_url' };
+        }
+        try {
+          const sep = state.sheetsApiUrl.includes('?') ? '&' : '?';
+          const url = state.sheetsApiUrl.trim() + sep + 'action=adminGet&pin=' + encodeURIComponent(pin || '');
+          const res = await fetch(url, { method: 'GET' });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           const json = await res.json();
+          if (json && json.status === 'unauthorized') {
+            return { ok: false, reason: 'unauthorized' };
+          }
           if (json && json.status === 'ok') {
             if (json.course && Object.keys(json.course).length > 0) {
               state.course = Object.assign({}, state.course, json.course);
@@ -1213,26 +1300,37 @@
                 });
               });
             }
+            if (json.template && Object.keys(json.template).length > 0) {
+              const incomingTpl = Object.assign({}, json.template);
+              if (!incomingTpl.logoDataUrl) {
+                incomingTpl.logoDataUrl = state.template.logoDataUrl || DEFAULT_LOGO_DATA_URI;
+              }
+              state.template = Object.assign({}, state.template, incomingTpl);
+            }
             saveState();
             renderAll();
-            if (!silent) showToast('تمت المزامنة مع Google Sheets بنجاح', 'success');
-            return true;
+            if (!silent) showToast('تمت المزامنة الآمنة مع Google Sheets بنجاح', 'success');
+            return { ok: true };
           }
           throw new Error('Bad payload');
         } catch (err) {
-          if (!silent) showToast('تعذر الاتصال بـ Google Sheets، تأكد من نشر الرابط بصلاحية Anyone', 'error');
-          return false;
+          if (!silent) showToast('تعذر الاتصال بـ Google Sheets، تأكد من نشر الكود المحمي بصلاحية Anyone', 'error');
+          return { ok: false, reason: 'network' };
         }
       }
 
       async function pushToSheets(payload) {
         if (!isValidSheetsUrl(state.sheetsApiUrl)) return false;
+        const bodyPayload = Object.assign({}, payload);
+        if (payload.action !== 'add') {
+          bodyPayload.pin = sessionAdminPin;
+        }
         try {
           await fetch(state.sheetsApiUrl.trim(), {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(bodyPayload)
           });
           return true;
         } catch (err) {
@@ -1281,28 +1379,27 @@
         const admView = document.getElementById('view-admin');
         const btnPub = document.getElementById('btn-mode-public');
         const btnAdm = document.getElementById('btn-mode-admin');
+        const btnLogout = document.getElementById('btn-admin-logout');
         const switcher = document.getElementById('header-mode-switcher');
-        const pubFooter = document.getElementById('pub-admin-footer');
 
-        if (state.viewMode === 'public') {
+        if (state.viewMode === 'admin' && adminUnlocked) {
+          pubView.classList.add('hidden');
+          admView.classList.remove('hidden');
+          switcher.classList.remove('hidden');
+          btnLogout.classList.remove('hidden');
+          btnAdm.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow';
+          btnPub.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
+        } else {
           pubView.classList.remove('hidden');
           admView.classList.add('hidden');
+          btnLogout.classList.add('hidden');
           btnPub.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow';
           btnAdm.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
           if (isLockedPublicLink) {
             switcher.classList.add('hidden');
-            pubFooter.classList.remove('hidden');
           } else {
             switcher.classList.remove('hidden');
-            pubFooter.classList.add('hidden');
           }
-        } else {
-          pubView.classList.add('hidden');
-          admView.classList.remove('hidden');
-          switcher.classList.remove('hidden');
-          pubFooter.classList.add('hidden');
-          btnAdm.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-teal-600 text-white shadow';
-          btnPub.className = 'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-300 hover:text-white';
         }
 
         document.querySelectorAll('.admin-panel').forEach(function (panel) {
@@ -1319,7 +1416,7 @@
         const label = document.getElementById('sync-label');
         if (isValidSheetsUrl(state.sheetsApiUrl)) {
           dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-          label.textContent = 'متصل بـ Google Sheets';
+          label.textContent = 'مربوط بـ Google Sheets';
         } else {
           dot.className = 'w-2 h-2 rounded-full bg-amber-400';
           label.textContent = 'حفظ محلي';
@@ -1352,7 +1449,6 @@
         const courses = getAllCourseTitles();
         const curr = getCurrentCourseTitle();
 
-        // Filter dropdown in Registrants tab
         const filterSel = document.getElementById('adm-course-filter');
         const filterOpts = [
           '<option value="__CURRENT__">الدورة الحالية فقط</option>',
@@ -1370,7 +1466,6 @@
           filterSel.value = '__CURRENT__';
         }
 
-        // Export course selector in Print / Word tab
         const expSel = document.getElementById('export-course-select');
         const expOpts = ['<option value="__CURRENT__">الدورة الحالية: ' + escapeHtml(curr.slice(0, 42)) + '</option>'];
         courses.forEach(function (cTitle) {
@@ -1467,8 +1562,7 @@
 
       function renderSheetsTab() {
         document.getElementById('adm-sheets-url').value = state.sheetsApiUrl || '';
-        document.getElementById('adm-pin-enabled').checked = Boolean(state.adminPinEnabled);
-        document.getElementById('adm-pin-value').value = state.adminPin || '1234';
+        document.getElementById('adm-pin-value').value = state.adminPin || '2026';
         const urls = buildShareUrls();
         document.getElementById('link-colleagues-preview').value = urls.colleagues;
         document.getElementById('link-admin-preview').value = urls.admin;
@@ -1594,18 +1688,23 @@
         const t = state.template;
         document.getElementById('tpl-header-right').value = t.headerRight || '';
         document.getElementById('tpl-header-left').value = t.headerLeft || '';
-        document.getElementById('tpl-recipient').value = t.recipientTitle || '';
+        document.getElementById('tpl-recipient').value = t.recipientLine1 || '';
+        document.getElementById('tpl-recipient-line2').value = t.recipientLine2 || '';
         document.getElementById('tpl-greeting').value = t.greeting || '';
         document.getElementById('tpl-intro').value = t.introParagraph || '';
         document.getElementById('tpl-closing').value = t.closingParagraph || '';
-        document.getElementById('tpl-signer-title').value = t.signerTitle || '';
+        document.getElementById('tpl-signer-title').value = t.signerTitle1 || '';
+        document.getElementById('tpl-signer-title2').value = t.signerTitle2 || '';
+        document.getElementById('tpl-signer-prefix').value = t.signerPrefix || '';
         document.getElementById('tpl-signer-name').value = t.signerName || '';
+        document.getElementById('tpl-footer-line1').value = t.footerLine1 || '';
+        document.getElementById('tpl-footer-line2').value = t.footerLine2 || '';
 
         const lhWrap = document.getElementById('tpl-letterhead-preview-wrap');
         const lhImg = document.getElementById('tpl-letterhead-preview');
         const btnRmLh = document.getElementById('btn-remove-letterhead');
-        if (t.letterheadImageDataUrl) {
-          lhImg.src = t.letterheadImageDataUrl;
+        if (t.logoDataUrl) {
+          lhImg.src = t.logoDataUrl;
           lhWrap.classList.remove('hidden');
           btnRmLh.classList.remove('hidden');
         } else {
@@ -1652,15 +1751,15 @@
         }).join('');
 
         return (
-          '<table class="nomination-table" dir="rtl" style="width:100%;border-collapse:collapse;margin:16px 0 20px;font-size:13.5px;">' +
+          '<table class="nomination-table" dir="rtl" style="width:100%;border-collapse:collapse;margin:14px 0 18px;font-size:13px;">' +
             '<thead>' +
               '<tr style="background-color:#f1f5f9;">' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;width:42px;">م</th>' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;">الاسم رباعي</th>' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;">الوظيفة</th>' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;">رقم الموبايل</th>' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;">البريد الإلكتروني</th>' +
-                '<th style="border:1px solid #334155;padding:8px;text-align:center;width:85px;">تأكيد الرغبة</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;width:38px;">م</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;">الاسم رباعي</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;">الوظيفة</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;">رقم الموبايل</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;">البريد الإلكتروني</th>' +
+                '<th style="border:1px solid #334155;padding:7px;text-align:center;width:82px;">تأكيد الرغبة</th>' +
               '</tr>' +
             '</thead>' +
             '<tbody>' + rows + '</tbody>' +
@@ -1701,38 +1800,66 @@
           return applyPlaceholders(base, selected, true);
         }
 
-        const headerSection = t.letterheadImageDataUrl
-          ? '<div style="text-align:center;margin-bottom:18px;border-bottom:2px solid #0f172a;padding-bottom:12px;">' +
-              '<img src="' + t.letterheadImageDataUrl + '" alt="الترويسة الرسمية" style="max-height:110px;max-width:100%;object-fit:contain;margin:0 auto;" />' +
-              '<div style="text-align:left;font-size:12.5px;margin-top:6px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.headerLeft), selected, false) + '</div>' +
-            '</div>'
-          : '<table style="width:100%;border:none;border-bottom:2px solid #0f172a;margin-bottom:20px;padding-bottom:10px;">' +
-              '<tr>' +
-                '<td style="border:none;text-align:right;vertical-align:top;font-weight:700;font-size:13.5px;white-space:pre-line;line-height:1.7;">' + applyPlaceholders(escapeHtml(t.headerRight), selected, false) + '</td>' +
-                '<td style="border:none;text-align:left;vertical-align:top;font-size:13px;white-space:pre-line;line-height:1.7;">' + applyPlaceholders(escapeHtml(t.headerLeft), selected, false) + '</td>' +
-              '</tr>' +
-            '</table>';
+        const logoCell = t.logoDataUrl
+          ? '<img src="' + t.logoDataUrl + '" alt="الشعار الرسمي" style="height:68px;max-width:95px;object-fit:contain;display:block;margin:0 auto;" />'
+          : '';
 
-        return (
-          headerSection +
-          '<div style="text-align:center;margin:14px 0 18px;">' +
-            '<h2 style="font-size:18px;font-weight:800;margin:0;text-decoration:underline;">خطاب ترشيح لدورة تدريبية</h2>' +
-          '</div>' +
-          '<p style="font-size:15px;font-weight:700;margin:0 0 8px;">' + escapeHtml(t.recipientTitle) + '</p>' +
-          '<p style="font-size:14.5px;font-weight:600;margin:0 0 14px;text-align:center;">' + escapeHtml(t.greeting) + '</p>' +
-          '<p style="font-size:14.5px;text-align:justify;margin:0 0 12px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.introParagraph), selected, false) + '</p>' +
-          buildNominationTableHtml(selected) +
-          '<p style="font-size:14.5px;text-align:justify;margin:14px 0 32px;white-space:pre-line;">' + applyPlaceholders(escapeHtml(t.closingParagraph), selected, false) + '</p>' +
-          '<table style="width:100%;border:none;margin-top:24px;">' +
+        const doubleRule = '<div style="border-top:2px solid #555555;border-bottom:1px solid #555555;height:4px;margin:8px 0 18px;"></div>';
+        const footerDoubleRule = '<div style="border-top:2px solid #555555;border-bottom:1px solid #555555;height:4px;margin:18px 0 8px;"></div>';
+
+        const headerHtml =
+          '<table dir="rtl" style="width:100%;border:none;border-collapse:collapse;margin-bottom:4px;">' +
             '<tr>' +
-              '<td style="border:none;width:55%;"></td>' +
-              '<td style="border:none;text-align:center;font-weight:700;font-size:14.5px;line-height:2;">' +
-                '<div>' + escapeHtml(t.signerTitle) + '</div>' +
-                '<div style="margin-top:16px;">' + escapeHtml(t.signerName) + '</div>' +
+              '<td style="border:none;width:38%;text-align:center;vertical-align:middle;font-weight:700;font-size:13px;color:#555555;white-space:pre-line;line-height:1.55;">' +
+                applyPlaceholders(escapeHtml(t.headerRight), selected, false) +
+              '</td>' +
+              '<td style="border:none;width:24%;text-align:center;vertical-align:middle;">' +
+                logoCell +
+              '</td>' +
+              '<td dir="ltr" style="border:none;width:38%;text-align:center;vertical-align:middle;font-weight:700;font-size:11.5px;color:#555555;white-space:pre-line;line-height:1.5;font-family:Arial,sans-serif;">' +
+                applyPlaceholders(escapeHtml(t.headerLeft), selected, false) +
               '</td>' +
             '</tr>' +
-          '</table>'
-        );
+          '</table>' +
+          doubleRule;
+
+        const bodyHtml =
+          '<div style="margin-top:6px;">' +
+            '<p style="font-size:16px;font-weight:800;margin:0 0 6px;text-align:right;">' + escapeHtml(t.recipientLine1) + '</p>' +
+            (t.recipientLine2
+              ? '<p style="font-size:15.5px;font-weight:800;margin:0 0 10px;padding-right:180px;text-align:right;">' + escapeHtml(t.recipientLine2) + '</p>'
+              : '') +
+            '<p style="font-size:15px;font-weight:700;margin:0 0 16px;text-align:center;">' + escapeHtml(t.greeting) + '</p>' +
+            '<p style="font-size:14.5px;text-align:justify;margin:0 0 12px;white-space:pre-line;line-height:1.85;">' +
+              applyPlaceholders(escapeHtml(t.introParagraph), selected, false) +
+            '</p>' +
+            buildNominationTableHtml(selected) +
+            '<p style="font-size:14.5px;text-align:justify;margin:12px 0 28px;white-space:pre-line;line-height:1.85;">' +
+              applyPlaceholders(escapeHtml(t.closingParagraph), selected, false) +
+            '</p>' +
+            '<table dir="rtl" style="width:100%;border:none;border-collapse:collapse;margin-top:16px;">' +
+              '<tr>' +
+                '<td style="border:none;width:46%;"></td>' +
+                '<td style="border:none;width:54%;text-align:center;font-weight:800;font-size:14.5px;line-height:1.9;">' +
+                  '<div>' + escapeHtml(t.signerTitle1) + '</div>' +
+                  (t.signerTitle2 ? '<div>' + escapeHtml(t.signerTitle2) + '</div>' : '') +
+                  (t.signerPrefix ? '<div style="text-align:right;padding-right:24px;margin-top:6px;">' + escapeHtml(t.signerPrefix) + '</div>' : '') +
+                  '<div style="margin-top:6px;">' + escapeHtml(t.signerName) + '</div>' +
+                '</td>' +
+              '</tr>' +
+            '</table>' +
+          '</div>';
+
+        const footerHtml =
+          '<div style="margin-top:auto;padding-top:20px;">' +
+            footerDoubleRule +
+            '<div style="text-align:center;font-size:11.5px;color:#555555;font-weight:600;line-height:1.6;">' +
+              '<div>' + escapeHtml(t.footerLine1) + '</div>' +
+              (t.footerLine2 ? '<div dir="ltr" style="font-family:Arial,sans-serif;font-size:11px;">' + escapeHtml(t.footerLine2) + '</div>' : '') +
+            '</div>' +
+          '</div>';
+
+        return '<div>' + headerHtml + bodyHtml + '</div>' + footerHtml;
       }
 
       function renderLetterPreview() {
@@ -1753,9 +1880,9 @@
           '<head><meta charset="utf-8" />' +
           '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->' +
           '<style>' +
-            '@page Section1 { size: 595.3pt 841.9pt; margin: 45pt 40pt 45pt 40pt; mso-header-margin: 35.4pt; mso-footer-margin: 35.4pt; }' +
+            '@page Section1 { size: 595.3pt 841.9pt; margin: 36pt 38pt 36pt 38pt; mso-header-margin: 28pt; mso-footer-margin: 28pt; }' +
             'div.Section1 { page: Section1; }' +
-            'body { font-family: "Arial", "Traditional Arabic", "Tahoma", sans-serif; direction: rtl; text-align: right; color: #111827; line-height: 1.8; }' +
+            'body { font-family: "Arial", "Traditional Arabic", "Tahoma", sans-serif; direction: rtl; text-align: right; color: #111827; line-height: 1.75; }' +
             'table { border-collapse: collapse; width: 100%; }' +
           '</style></head>' +
           '<body><div class="Section1">' + letterHtml + '</div></body></html>';
@@ -1800,19 +1927,18 @@
       function downloadSampleTemplate() {
         const sample = [
           '<div dir="rtl" style="font-family: Cairo, Arial, sans-serif; line-height: 1.9;">',
-          '  <div style="display:flex; justify-content:space-between; border-bottom:2px solid #0f3d5e; padding-bottom:10px; margin-bottom:20px;">',
-          '    <div><strong>اسم الجهة / الإدارة</strong><br/>إدارة التدريب والتطوير</div>',
-          '    <div style="text-align:left;">التاريخ: {{TODAY}}<br/>الموضوع: ترشيح لدورة تدريبية</div>',
-          '  </div>',
-          '  <h2 style="text-align:center; color:#0f3d5e;">خطاب ترشيح رسمي</h2>',
-          '  <p><strong>السيد مدير {{ORGANIZER}}</strong></p>',
-          '  <p>تحية طيبة وبعد،،،</p>',
-          '  <p>نتشرف بترشيح السادة الموضحة بياناتهم أدناه (وعددهم {{COUNT}}) لحضور الدورة التدريبية بعنوان <strong>{{COURSE_TITLE}}</strong> خلال الفترة <strong>{{COURSE_DATE}}</strong> في <strong>{{LOCATION}}</strong>:</p>',
+          '  <table style="width:100%;border:none;border-bottom:3px double #555;padding-bottom:8px;margin-bottom:16px;">',
+          '    <tr>',
+          '      <td style="text-align:center;font-weight:700;color:#555;">وزارة الموارد المائية والري<br/>مصلحة الري<br/>قطاع التوسع الأفقي والمشروعات</td>',
+          '      <td style="text-align:center;">[الشعار]</td>',
+          '      <td dir="ltr" style="text-align:center;font-weight:700;color:#555;font-size:11px;">Ministry Of Water Resources & Irrigation<br/>Irrigation Department<br/>Horizontal Expansion & Projects Sector</td>',
+          '    </tr>',
+          '  </table>',
+          '  <p><strong>السيد المهندس / .......................................</strong></p>',
+          '  <p style="text-align:center;"><strong>تحية طيبة وبعد ،،،</strong></p>',
+          '  <p>بالإشارة إلى الدورة التدريبية بعنوان <strong>{{COURSE_TITLE}}</strong> خلال الفترة <strong>{{COURSE_DATE}}</strong> في <strong>{{LOCATION}}</strong> (عدد المرشحين: {{COUNT}}):</p>',
           '  {{TABLE}}',
-          '  <p>وتفضلوا بقبول فائق الاحترام والتقدير،،،</p>',
-          '  <div style="margin-top:40px; text-align:left; padding-left:40px;">',
-          '    <strong>مدير الإدارة</strong><br/><br/>التوقيع: ........................',
-          '  </div>',
+          '  <p>وتفضلوا بقبول فائق الاحترام والتقدير ،،،</p>',
           '</div>'
         ].join('\n');
 
@@ -1856,34 +1982,79 @@
         ta.remove();
       }
 
-      // ==================== ADMIN PIN FLOW ====================
+      // ==================== MANDATORY ADMIN AUTH FLOW ====================
 
-      function tryEnterAdmin() {
-        if (state.adminPinEnabled && !adminUnlocked) {
-          document.getElementById('input-pin-attempt').value = '';
-          document.getElementById('err-pin-attempt').classList.add('hidden');
-          document.getElementById('modal-pin').classList.remove('hidden');
+      function openAdminAuthModal() {
+        if (adminUnlocked) {
+          state.viewMode = 'admin';
+          renderAll();
           return;
         }
-        isLockedPublicLink = false;
-        state.viewMode = 'admin';
-        saveState();
-        renderAll();
+        document.getElementById('input-pin-attempt').value = '';
+        document.getElementById('err-pin-attempt').classList.add('hidden');
+        const hint = document.getElementById('pin-modal-hint');
+        if (isValidSheetsUrl(state.sheetsApiUrl)) {
+          hint.textContent = 'أدخل الرمز السري (ADMIN_SECRET) للتحقق عبر Google Sheets وفتح لوحة الأدمن';
+        } else {
+          hint.textContent = 'أدخل رمز دخول الأدمن لفتح لوحة التحكم (الرمز الافتراضي للتجربة المحلية: 2026)';
+        }
+        document.getElementById('modal-pin').classList.remove('hidden');
+        setTimeout(function () {
+          document.getElementById('input-pin-attempt').focus();
+        }, 60);
       }
 
-      document.getElementById('form-pin-unlock').addEventListener('submit', function (e) {
+      document.getElementById('form-pin-unlock').addEventListener('submit', async function (e) {
         e.preventDefault();
         const attempt = document.getElementById('input-pin-attempt').value.trim();
-        if (attempt === String(state.adminPin || '1234')) {
+        const errEl = document.getElementById('err-pin-attempt');
+        const btnSubmit = document.getElementById('btn-submit-pin');
+        errEl.classList.add('hidden');
+
+        if (!attempt) {
+          errEl.textContent = 'يرجى إدخال رمز الدخول';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        if (isValidSheetsUrl(state.sheetsApiUrl)) {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = 'جاري التحقق...';
+          const result = await syncAdminFromSheets(attempt, true);
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'تحقق ودخول';
+
+          if (result.ok) {
+            sessionAdminPin = attempt;
+            adminUnlocked = true;
+            isLockedPublicLink = false;
+            state.viewMode = 'admin';
+            document.getElementById('modal-pin').classList.add('hidden');
+            renderAll();
+            showToast('تم التحقق وفتح لوحة الأدمن بنجاح', 'success');
+            return;
+          } else if (result.reason === 'unauthorized') {
+            errEl.textContent = 'رمز الدخول غير صحيح (غير مطابق لـ ADMIN_SECRET في الشيت)';
+            errEl.classList.remove('hidden');
+            return;
+          } else {
+            errEl.textContent = 'تعذر التحقق من الخادم، تأكد من نشر الكود المحمي في Apps Script';
+            errEl.classList.remove('hidden');
+            return;
+          }
+        }
+
+        if (attempt === String(state.adminPin || '2026')) {
+          sessionAdminPin = attempt;
           adminUnlocked = true;
           isLockedPublicLink = false;
           state.viewMode = 'admin';
           document.getElementById('modal-pin').classList.add('hidden');
-          saveState();
           renderAll();
           showToast('تم فتح لوحة تحكم الأدمن', 'success');
         } else {
-          document.getElementById('err-pin-attempt').classList.remove('hidden');
+          errEl.textContent = 'رمز الدخول غير صحيح، يرجى المحاولة مرة أخرى';
+          errEl.classList.remove('hidden');
         }
       });
 
@@ -1891,17 +2062,24 @@
         document.getElementById('modal-pin').classList.add('hidden');
       });
 
+      document.getElementById('btn-admin-logout').addEventListener('click', function () {
+        adminUnlocked = false;
+        sessionAdminPin = '';
+        state.viewMode = 'public';
+        renderAll();
+        showToast('تم قفل لوحة الأدمن وتسجيل الخروج', 'info');
+      });
+
       // ==================== EVENT LISTENERS ====================
 
       document.getElementById('btn-mode-public').addEventListener('click', function () {
         state.viewMode = 'public';
         document.getElementById('pub-success-state').classList.add('hidden');
-        saveState();
         renderAll();
       });
 
-      document.getElementById('btn-mode-admin').addEventListener('click', tryEnterAdmin);
-      document.getElementById('btn-unlock-admin-footer').addEventListener('click', tryEnterAdmin);
+      document.getElementById('btn-mode-admin').addEventListener('click', openAdminAuthModal);
+      document.getElementById('btn-unlock-admin-footer').addEventListener('click', openAdminAuthModal);
 
       document.querySelectorAll('.admin-tab').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -1919,7 +2097,6 @@
         });
       });
 
-      // Course filters
       document.getElementById('adm-course-filter').addEventListener('change', function (e) {
         state.courseFilter = e.target.value;
         saveState();
@@ -1989,7 +2166,7 @@
         copyText(buildShareUrls().admin, 'تم نسخ رابط لوحة الأدمن (#admin)');
       });
 
-      // Google Sheets URL & PIN
+      // Google Sheets URL & Local PIN
       document.getElementById('btn-save-sheets-url').addEventListener('click', async function () {
         const url = document.getElementById('adm-sheets-url').value.trim();
         if (url && !isValidSheetsUrl(url)) {
@@ -2001,26 +2178,33 @@
         renderSheetsTab();
         renderViewMode();
         if (url) {
-          await syncFromSheets(false);
+          const res = await syncAdminFromSheets(sessionAdminPin || state.adminPin, false);
+          if (!res.ok && res.reason === 'unauthorized') {
+            showToast('الرابط محفوظ، لكن رمز الأدمن غير مطابق لـ ADMIN_SECRET داخل الشيت', 'error');
+          }
         } else {
           showToast('تم إلغاء الربط والعودة للحفظ المحلي', 'info');
         }
       });
 
       document.getElementById('btn-refresh-from-sheets').addEventListener('click', function () {
-        syncFromSheets(false);
+        syncAdminFromSheets(sessionAdminPin, false);
       });
 
       document.getElementById('btn-save-pin').addEventListener('click', function () {
-        state.adminPinEnabled = document.getElementById('adm-pin-enabled').checked;
-        state.adminPin = document.getElementById('adm-pin-value').value.trim() || '1234';
-        adminUnlocked = true;
+        const val = document.getElementById('adm-pin-value').value.trim();
+        if (!val) {
+          showToast('يرجى إدخال رمز سري صالح', 'error');
+          return;
+        }
+        state.adminPin = val;
+        sessionAdminPin = val;
         saveState();
-        showToast(state.adminPinEnabled ? 'تم تفعيل قفل لوحة الأدمن بنجاح' : 'تم إيقاف قفل لوحة الأدمن', 'success');
+        showToast('تم تحديث رمز الدخول المحلي بنجاح', 'success');
       });
 
       document.getElementById('btn-copy-gas-code').addEventListener('click', function () {
-        copyText(GAS_SCRIPT_SOURCE, 'تم نسخ كود Google Apps Script بنجاح');
+        copyText(GAS_SCRIPT_SOURCE, 'تم نسخ كود Google Apps Script المحمي بنجاح');
       });
 
       document.getElementById('btn-download-gas-code').addEventListener('click', function () {
@@ -2033,7 +2217,7 @@
         a.click();
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        showToast('تم تحميل ملف Code.gs', 'success');
+        showToast('تم تحميل ملف Code.gs المحمي', 'success');
       });
 
       // Save Course & Announcement
@@ -2308,20 +2492,30 @@
         document.getElementById('modal-confirm-delete').classList.add('hidden');
       });
 
-      // Template Tab Actions
-      document.getElementById('btn-use-standard-tpl').addEventListener('click', function () {
+      // Template Tab Actions (Synced to Google Sheets)
+      document.getElementById('btn-use-standard-tpl').addEventListener('click', async function () {
         state.template.mode = 'standard';
         state.template.headerRight = document.getElementById('tpl-header-right').value;
         state.template.headerLeft = document.getElementById('tpl-header-left').value;
-        state.template.recipientTitle = document.getElementById('tpl-recipient').value.trim();
+        state.template.recipientLine1 = document.getElementById('tpl-recipient').value.trim();
+        state.template.recipientLine2 = document.getElementById('tpl-recipient-line2').value.trim();
         state.template.greeting = document.getElementById('tpl-greeting').value.trim();
         state.template.introParagraph = document.getElementById('tpl-intro').value;
         state.template.closingParagraph = document.getElementById('tpl-closing').value;
-        state.template.signerTitle = document.getElementById('tpl-signer-title').value.trim();
+        state.template.signerTitle1 = document.getElementById('tpl-signer-title').value.trim();
+        state.template.signerTitle2 = document.getElementById('tpl-signer-title2').value.trim();
+        state.template.signerPrefix = document.getElementById('tpl-signer-prefix').value.trim();
         state.template.signerName = document.getElementById('tpl-signer-name').value.trim();
+        state.template.footerLine1 = document.getElementById('tpl-footer-line1').value.trim();
+        state.template.footerLine2 = document.getElementById('tpl-footer-line2').value.trim();
         saveState();
         renderAll();
-        showToast('تم حفظ وتفعيل القالب الرسمي للجواب', 'success');
+        if (isValidSheetsUrl(state.sheetsApiUrl)) {
+          await pushToSheets({ action: 'saveTemplate', data: state.template });
+          showToast('تم حفظ ومزامنة قالب الخطاب في Google Sheets بنجاح', 'success');
+        } else {
+          showToast('تم حفظ وتفعيل قالب الخطاب الرسمي بنجاح', 'success');
+        }
       });
 
       document.getElementById('tpl-letterhead-input').addEventListener('change', function (e) {
@@ -2329,44 +2523,46 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function (ev) {
-          state.template.letterheadImageDataUrl = ev.target.result;
+          state.template.logoDataUrl = ev.target.result;
           saveState();
           renderTemplateTab();
           renderLetterPreview();
-          showToast('تم رفع صورة الترويسة الرسمية بنجاح', 'success');
+          showToast('تم تحديث الشعار الرسمي بنجاح (اضغط حفظ للمزامنة)', 'success');
         };
         reader.readAsDataURL(file);
         e.target.value = '';
       });
 
       document.getElementById('btn-remove-letterhead').addEventListener('click', function () {
-        state.template.letterheadImageDataUrl = '';
+        state.template.logoDataUrl = '';
         saveState();
         renderTemplateTab();
         renderLetterPreview();
-        showToast('تمت إزالة صورة الترويسة', 'info');
+        showToast('تمت إزالة الشعار الرسمي', 'info');
       });
 
-      document.getElementById('custom-tpl-file-input').addEventListener('change', function (e) {
+      document.getElementById('custom-tpl-file-input').addEventListener('change', async function (e) {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = function (ev) {
+        reader.onload = async function (ev) {
           state.template.customTemplateHtml = String(ev.target.result || '');
           state.template.customTemplateName = file.name;
           state.template.mode = 'custom';
           saveState();
           renderAll();
-          showToast('تم رفع وتفعيل التيمبلت المخصص بنجاح', 'success');
+          await pushToSheets({ action: 'saveTemplate', data: state.template });
+          showToast('تم رفع وتفعيل التيمبلت المخصص ومزامنته بنجاح', 'success');
         };
         reader.readAsText(file, 'UTF-8');
         e.target.value = '';
       });
 
-      document.getElementById('btn-clear-custom-tpl').addEventListener('click', function () {
+      document.getElementById('btn-clear-custom-tpl').addEventListener('click', async function () {
         state.template.mode = 'standard';
         saveState();
         renderAll();
+        await pushToSheets({ action: 'saveTemplate', data: state.template });
         showToast('تم الرجوع إلى القالب الرسمي', 'info');
       });
 
@@ -2416,10 +2612,13 @@
         e.target.value = '';
       });
 
-      // Initialize & auto-sync if linked
+      // Initialize
       renderAll();
       if (isValidSheetsUrl(state.sheetsApiUrl)) {
-        syncFromSheets(true);
+        syncPublicCourseFromSheets();
+      }
+      if (window.location.hash === '#admin') {
+        openAdminAuthModal();
       }
     })();
   </script>
