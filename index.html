@@ -1781,12 +1781,30 @@
         );
       }
 
+      function formatLetterParagraph(escapedHtml) {
+        let out = String(escapedHtml || '');
+        // Support *bold* or **bold** markdown syntax cleanly
+        out = out.replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight:800;">$1</strong>');
+        out = out.replace(/\*([^*]+)\*/g, '<strong style="font-weight:800;">$1</strong>');
+        // Auto-bold "بالإشارة إلى / إلي" variants if not already wrapped in <strong>
+        out = out.replace(/(?<!<strong[^>]*>)(ب[إا]ل[إا]شارة\s+[إا]ل[ىي])(?!<\/strong>)/g, '<strong style="font-weight:800;">$1</strong>');
+        return out;
+      }
+
+      function formatClosingParagraph(escapedHtml) {
+        let out = formatLetterParagraph(escapedHtml);
+        out = out.replace(/(^|\n)\s*(وتفضلوا\s+بقبول[^\n]*)/g, function (_, nl, phrase) {
+          return '<div style="text-align:center;font-weight:800;margin-top:10px;">' + phrase.trim() + '</div>';
+        });
+        return out;
+      }
+
       function applyPlaceholders(text, selectedList, allowTableHtml) {
         const c = state.course;
         const activeCourseTitle = getExportTargetCourseTitle();
         let out = String(text || '');
         const map = {
-          '{{COURSE_TITLE}}': escapeHtml(activeCourseTitle || ''),
+          '{{COURSE_TITLE}}': '<strong style="font-weight:800;">' + escapeHtml(activeCourseTitle || '') + '</strong>',
           '{{ORGANIZER}}': escapeHtml(c.organizer || ''),
           '{{COURSE_DATE}}': escapeHtml(c.dateRange || ''),
           '{{LOCATION}}': escapeHtml(c.location || ''),
@@ -1845,12 +1863,12 @@
               : '') +
             '<p style="font-size:15px;font-weight:700;margin:0 0 16px;text-align:center;">' + escapeHtml(t.greeting) + '</p>' +
             '<p style="font-size:14.5px;text-align:justify;margin:0 0 12px;white-space:pre-line;line-height:1.85;">' +
-              applyPlaceholders(escapeHtml(t.introParagraph), selected, false) +
+              formatLetterParagraph(applyPlaceholders(escapeHtml(t.introParagraph), selected, false)) +
             '</p>' +
             buildNominationTableHtml(selected) +
-            '<p style="font-size:14.5px;text-align:justify;margin:12px 0 28px;white-space:pre-line;line-height:1.85;">' +
-              applyPlaceholders(escapeHtml(t.closingParagraph), selected, false) +
-            '</p>' +
+            '<div style="font-size:14.5px;text-align:justify;margin:12px 0 24px;white-space:pre-line;line-height:1.85;">' +
+              formatClosingParagraph(applyPlaceholders(escapeHtml(t.closingParagraph), selected, false)) +
+            '</div>' +
             '<table dir="rtl" style="width:100%;border:none;border-collapse:collapse;margin-top:16px;">' +
               '<tr>' +
                 '<td style="border:none;width:46%;"></td>' +
